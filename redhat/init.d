@@ -43,23 +43,30 @@ logfile=${LOGFILE-/var/log/bricklayer.log}
 lockfile=${LOCKFILE-/var/lock/subsys/bricklayer}
 RETVAL=0
 
+python=${PYTHON-/usr/bin/python2.6}
+consumer=${CONSUMER-/usr/bin/build_consumer}
+consumer_pidfile=${CONSUMER_PIDFILE-/var/run/build_consumer.pid}
+consumer_logfile=${CONSUMER_LOGFILE-/var/log/build_consumer.log}
+
 test -x ${twistd} || exit 0
 test -r ${tacfile} || exit 0
 
 start() {
 	echo -n "Starting bricklayer"
 	daemon ${twistd} -y ${tacfile} --rundir=${rundir} --pidfile=${pidfile} --logfile=${logfile}
+	${python} ${consumer} --pidfile=${consumer_pidfile} --logfile=${consumer_logfile} > /dev/null 2>&1 &
 	RETVAL=$?
-	[ $RETVAL = 0 ] && touch ${lockfile}
+	[ $RETVAL = 0 ] && touch ${lockfile} 
 	return $RETVAL
 }
 
 stop() {
 	echo -n "Stopping bricklayer"
 	killproc -p ${pidfile} -d 10 ${twistd}
+	killproc -p ${consumer_pidfile} -d 10 ${consumer}
 	RETVAL=$?
 	echo
-	[ $RETVAL = 0 ] && rm -f ${lockfile} ${pidfile}
+	[ $RETVAL = 0 ] && rm -f ${lockfile} ${pidfile} ${consumer_pidfile}
 }
 
 case "$1" in
