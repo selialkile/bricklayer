@@ -41,10 +41,6 @@ class Builder:
         self.git = git.Git(self.project)
         self.workdir = self.git.workdir
         self.build_system = BrickConfig().get('build', 'system')
-        self.ftp_host = BrickConfig().get('ftp', 'host')
-        self.ftp_user = BrickConfig().get('ftp', 'user')
-        self.ftp_pass = BrickConfig().get('ftp', 'pass')
-        self.ftp_dir = BrickConfig().get('ftp', 'dir')
         
         if self.build_system == 'rpm':
             self.package_builder = RpmBuilder(self)
