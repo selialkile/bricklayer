@@ -11,6 +11,7 @@ import pystache
 
 from projects import Projects
 from config import BrickConfig
+from build_info import BuildInfo
 
 from git import Git
 
@@ -33,6 +34,12 @@ class RpmBuilder():
         templates_dir = os.path.join(self.builder.templates_dir, 'rpm')
         spec_filename = os.path.join(rpm_dir, 'SPECS', "%s.spec" % self.project.name)
         dir_prefix = "%s-%s" % (self.project.name, self.project.version())
+
+        self.build_info = BuildInfo(self.project.name)
+        logfile = os.path.join(self.builder.workspace, 'log', '%s.%s.log' % (self.project.name, self.build_info.build_id))
+        self.build_info.log(logfile)
+        self.stdout = open(logfile, 'a+')
+        self.stderr = self.stdout
 
         for dir in ('SOURCES', 'SPECS', 'RPMS', 'SRPMS', 'BUILD', 'TMP'):
             if not os.path.isdir(os.path.join(rpm_dir, dir)):
@@ -109,7 +116,7 @@ class RpmBuilder():
                 rvmexec = rvmexec.split()[1]
             
             # I need the output not to log on file
-            rvm_cmd = subprocess.Popen('/usr/local/bin/rvm info %s' % rvmexec,
+            rvm_cmd = subprocess.Popen('/usr/local/rvm/bin/rvm info %s' % rvmexec,
                     shell=True, stdout=subprocess.PIPE)
             rvm_cmd.wait()
 
