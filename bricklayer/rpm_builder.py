@@ -150,7 +150,7 @@ class RpmBuilder():
         self.project.save()
 
         rpm_cmd = self.builder._exec([ "rpmbuild", "--define", "_topdir %s" % rpm_dir, "-ba", spec_filename ],
-            cwd=self.builder.workdir, env=rvm_env
+            cwd=self.builder.workdir, env=rvm_env, stdout=self.stdout, stderr=self.stderr
         )
 
         rpm_cmd.wait()
