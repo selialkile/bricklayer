@@ -36,6 +36,8 @@ install -p -D -m 0755 init.d %{buildroot}%{_initrddir}/%{name}
 
 sed -i '/^system:/s/: .*/: rpm/g' %{buildroot}%{_sysconfdir}/%{name}/%{name}.ini
 
+find %{buildroot} -type f -iname \*.py[co] -exec rm -f {} \;
+
 %clean
 rm -rf %{buildroot}
 rm -rf %{_builddir}/%{name}-%{version}
