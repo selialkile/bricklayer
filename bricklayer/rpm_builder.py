@@ -144,7 +144,6 @@ class RpmBuilder():
         rendered_template.write("* %(date)s %(username)s <%(email)s> - %(version)s-%(release)s\n" % template_data)
 
         for git_log in self.builder.git.log():
-            log.info("LALA = git_log %s" % git_log)
             rendered_template.write('- %s' % git_log)
         rendered_template.close()
 
