@@ -66,11 +66,12 @@ class Project(cyclone.web.RequestHandler):
                 setattr(project, aname, arg[0])
         try:
             project.save()
-            self.finish(cyclone.escape.json_encode({'status': 'build scheduled'}))
+            #self.finish(cyclone.escape.json_encode({'status': 'build scheduled'}))
+            reactor.callInThread(queue.enqueue, 'build', 'builder.build_project', {'project': project.name, 'branch': branch, 'force': True})
         except Exception, e:
             log.err(e)
-            self.finish(cyclone.escape.json_encode({'status': 'fail'}))
-        reactor.callInThread(queue.enqueue, 'build', 'builder.build_project', {'project': project.name, 'branch': self.get_argument('branch'), 'force': True})
+            #self.finish(cyclone.escape.json_encode({'status': 'fail'}))
+        self.finish(cyclone.escape.json_encode({'status': 'build scheduled'}))
     
     def get(self, name='', branch='master'):
         try:
