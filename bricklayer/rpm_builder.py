@@ -75,8 +75,8 @@ class RpmBuilder():
 
         template_data = {
                 'name': self.project.name,
-                'version': "%s" % (self.project.version()),
-                'release': "%s" % (self.project.release),
+                'version': self.project.version(branch),
+                'release': self.project.release,
                 'build_dir': build_dir,
                 'build_cmd': self.project.build_cmd,
                 'install_cmd': self.builder.mod_install_cmd,
@@ -144,6 +144,7 @@ class RpmBuilder():
         rendered_template.write("* %(date)s %(username)s <%(email)s> - %(version)s-%(release)s\n" % template_data)
 
         for git_log in self.builder.git.log():
+            log.info("LALA = git_log %s" % git_log)
             rendered_template.write('- %s' % git_log)
         rendered_template.close()
 
@@ -156,42 +157,36 @@ class RpmBuilder():
         rpm_cmd.wait()
 
     def upload(self, branch):
-        if self.ftp_host:
-            rpm_dir = os.path.join(self.workspace, 'rpm')
-            rpm_prefix = "%s-%s-%s" % (self.project.name, self.project.version(), self.project.release)
-            list = []
-            for path, dirs, files in os.walk(rpm_dir):
-                if os.path.isdir(path):
-                    for file in (os.path.join(path, file) for file in files):
-                        try:
-                            if os.path.isfile(file) and file.find(rpm_prefix) != -1:
-                                list.append(file)
-                        except Exception, e:
-                            log.error(e)
+        repository_url, user, passwd = self.project.repository()
+        rpm_dir = os.path.join(self.builder.workspace, 'rpm')
+        rpm_prefix = "%s-%s-%s" % (self.project.name, self.project.version(), self.project.release)
+        list = []
+        for path, dirs, files in os.walk(rpm_dir):
+            if os.path.isdir(path):
+                for file in (os.path.join(path, file) for file in files):
+                    try:
+                        if os.path.isfile(file) and file.find(rpm_prefix) != -1:
+                            list.append(file)
+                    except Exception, e:
+                        log.error(e)
 
-            ftp = ftplib.FTP()
+        ftp = ftplib.FTP()
+        try:
+            ftp.connect(repository_url)
+            ftp.login(user, passwd)
+            ftp.cwd('/')
+        except ftplib.error_reply, e:
+            log.error('Cannot conect to ftp server %s' % e)
+
+        for file in list:
+            filename = os.path.basename(file)
             try:
-                ftp.connect(self.ftp_host)
-                if self.ftp_user and self.ftp_pass:
-                    ftp.login(self.ftp_user, self.ftp_pass)
-                else:
-                    ftp.login()
-                if self.ftp_dir:
-                    ftp.cwd(self.ftp_dir)
+                if os.path.isfile(file):
+                    f = open(file, 'rb')
+                    ftp.storbinary('STOR %s' % filename, f)
+                    f.close()
+                    log.info("File %s has been successfully sent to ftp server %s" % (filename, self.ftp_host))
             except ftplib.error_reply, e:
-                log.error('Cannot conect to ftp server %s' % e)
+                log.error(e)
 
-            for file in list:
-                filename = os.path.basename(file)
-                try:
-                    if os.path.isfile(file):
-                        f = open(file, 'rb')
-                        ftp.storbinary('STOR %s' % filename, f)
-                        f.close()
-                        log.info("File %s has been successfully sent to ftp server %s" % (filename, self.ftp_host))
-                except ftplib.error_reply, e:
-                    log.error(e)
-
-            ftp.quit()
-
-
+        ftp.quit()
