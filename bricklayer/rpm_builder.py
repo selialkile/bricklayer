@@ -1,15 +1,20 @@
 import os
 import sys
-import time
 import shutil
+import time
 import re
+import logging as log
+import subprocess
 import ftplib
 import tarfile
+import pystache
 
 from projects import Projects
 from config import BrickConfig
 
-class RpmBuilder:
+from git import Git
+
+class RpmBuilder():
 
     def __init__(self, builder):
         self.builder = builder
@@ -24,8 +29,8 @@ class RpmBuilder:
         new_file.close()
         
     def build(self, branch, last_tag=None):
-        rpm_dir = os.path.join(builder.workspace, 'rpm')
-        templates_dir = os.path.join(builder.templates_dir, 'rpm')
+        rpm_dir = os.path.join(self.builder.workspace, 'rpm')
+        templates_dir = os.path.join(self.builder.templates_dir, 'rpm')
         spec_filename = os.path.join(rpm_dir, 'SPECS', "%s.spec" % self.project.name)
         dir_prefix = "%s-%s" % (self.project.name, self.project.version())
 
@@ -41,7 +46,7 @@ class RpmBuilder:
         source_file = os.path.join(rpm_dir, 'SOURCES', '%s.tar.gz' % dir_prefix)
 
         cur_dir = os.getcwd()
-        os.chdir(builder.workspace)
+        os.chdir(self.builder.workspace)
 
         if os.path.isdir(dir_prefix):
             shutil.rmtree(dir_prefix)
@@ -56,11 +61,6 @@ class RpmBuilder:
         tar.close()
         shutil.rmtree(dir_prefix)
         os.chdir(cur_dir)
-
-        if self.project.release is None or self.project.release is 0:
-            self.project.release = 1
-        elif self.project.release >= 1:
-            self.project.release = "%s" % (int(self.project.release) + 1)
 
         if self.project.install_prefix is None:
             self.project.install_prefix = 'opt'
@@ -79,7 +79,7 @@ class RpmBuilder:
                 'release': "%s" % (self.project.release),
                 'build_dir': build_dir,
                 'build_cmd': self.project.build_cmd,
-                'install_cmd': self.mod_install_cmd,
+                'install_cmd': self.builder.mod_install_cmd,
                 'username': self.project.username,
                 'email': self.project.email,
                 'date': time.strftime("%a %h %d %Y"),
@@ -87,7 +87,7 @@ class RpmBuilder:
                 'source': source_file,
             }
 
-        rvm_rc = os.path.join(self.workdir, '.rvmrc')
+        rvm_rc = os.path.join(self.builder.workdir, '.rvmrc')
         rvm_rc_example = rvm_rc +  ".example"
         has_rvm = False
 
@@ -129,9 +129,9 @@ class RpmBuilder:
 
         log.info(rvm_env)
 
-        if os.path.isfile(os.path.join(self.workdir, 'rpm', "%s.spec" % self.project.name)):            
-            self.dos2unix(os.path.join(self.workdir, 'rpm', "%s.spec" % self.project.name))
-            template_fd = open(os.path.join(self.workdir, 'rpm', "%s.spec" % self.project.name))
+        if os.path.isfile(os.path.join(self.builder.workdir, 'rpm', "%s.spec" % self.project.name)):            
+            self.dos2unix(os.path.join(self.builder.workdir, 'rpm', "%s.spec" % self.project.name))
+            template_fd = open(os.path.join(self.builder.workdir, 'rpm', "%s.spec" % self.project.name))
         else:
             template_fd = open(os.path.join(templates_dir, 'project.spec'))
 
@@ -143,14 +143,14 @@ class RpmBuilder:
         rendered_template = open(spec_filename, 'a')
         rendered_template.write("* %(date)s %(username)s <%(email)s> - %(version)s-%(release)s\n" % template_data)
 
-        for git_log in self.git.log():
+        for git_log in self.builder.git.log():
             rendered_template.write('- %s' % git_log)
         rendered_template.close()
 
         self.project.save()
 
-        rpm_cmd = self._exec([ "rpmbuild", "--define", "_topdir %s" % rpm_dir, "-ba", spec_filename ],
-            cwd=self.workdir, env=rvm_env
+        rpm_cmd = self.builder._exec([ "rpmbuild", "--define", "_topdir %s" % rpm_dir, "-ba", spec_filename ],
+            cwd=self.builder.workdir, env=rvm_env
         )
 
         rpm_cmd.wait()
