@@ -75,7 +75,7 @@ class RpmBuilder():
         if not self.project.install_cmd:
 
             self.project.install_cmd = 'cp -r \`ls | grep -Ev "debian|rpm"\` %s/%s/%s' % (
-                    self.build_dir,
+                    build_dir,
                     self.project.install_prefix,
                     self.project.name
                 )
