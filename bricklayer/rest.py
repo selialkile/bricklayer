@@ -46,7 +46,6 @@ class Project(cyclone.web.RequestHandler):
                 project.group_name = self.get_argument('group_name')
                 project.save()
                 log.msg('Project created:', project.name)
-                reactor.callInThread(queue.enqueue, 'build', 'builder.build_project', {'project': project.name, 'branch': self.get_argument('branch'), 'force': True})
                 self.write(cyclone.escape.json_encode({'status': 'ok'}))
             except Exception, e:
                 log.err()
