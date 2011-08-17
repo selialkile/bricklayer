@@ -20,6 +20,7 @@ class RpmBuilder():
     def __init__(self, builder):
         self.builder = builder
         self.project = self.builder.project
+        self.distribution = None
 
     def dos2unix(self, file):
         f = open(file, 'r').readlines()
@@ -30,8 +31,8 @@ class RpmBuilder():
         new_file.close()
         
     def build(self, branch, last_tag=None):
-        rpm_dir = os.path.join(self.builder.workspace, 'rpm')
         templates_dir = os.path.join(self.builder.templates_dir, 'rpm')
+        rpm_dir = os.path.join(self.builder.workspace, 'rpm')
         spec_filename = os.path.join(rpm_dir, 'SPECS', "%s.spec" % self.project.name)
         dir_prefix = "%s-%s" % (self.project.name, self.project.version())
 
@@ -83,7 +84,6 @@ class RpmBuilder():
         template_data = {
                 'name': self.project.name,
                 'version': self.project.version(branch),
-                'release': self.project.release,
                 'build_dir': build_dir,
                 'build_cmd': self.project.build_cmd,
                 'install_cmd': self.builder.mod_install_cmd,
@@ -97,6 +97,8 @@ class RpmBuilder():
         rvm_rc = os.path.join(self.builder.workdir, '.rvmrc')
         rvm_rc_example = rvm_rc +  ".example"
         has_rvm = False
+
+        environment = None
 
         if os.path.isfile(rvm_rc):
             has_rvm = True
@@ -127,14 +129,22 @@ class RpmBuilder():
                     rvm_env[name.strip(':')] = value.replace('"', '')
             rvm_env['HOME'] = os.environ['HOME']
 
-        if len(rvm_env.keys()) < 1:
-            rvm_env = os.environ
-        else:
-            for param in os.environ.keys():
-                if param.find('PROXY') != -1:
-                    rvm_env[param] = os.environ[param]
+            if len(rvm_env.keys()) < 1:
+                rvm_env = os.environ
+            else:
+                for param in os.environ.keys():
+                    if param.find('PROXY') != -1:
+                        rvm_env[param] = os.environ[param]
+                try:
+                    os.environ.pop('PATH')
+                    os.environ.pop('GEM_HOME')
+                    os.environ.pop('BUNDLER_PATH')
+                except Exception, e:
+                    pass
+                rvm_env.update(os.environ)
 
-        log.info(rvm_env)
+            environment = rvm_env
+            log.info(environment)
 
         if os.path.isfile(os.path.join(self.builder.workdir, 'rpm', "%s.spec" % self.project.name)):            
             self.dos2unix(os.path.join(self.builder.workdir, 'rpm', "%s.spec" % self.project.name))
@@ -148,7 +158,7 @@ class RpmBuilder():
         rendered_template.close()
 
         rendered_template = open(spec_filename, 'a')
-        rendered_template.write("* %(date)s %(username)s <%(email)s> - %(version)s-%(release)s\n" % template_data)
+        rendered_template.write("* %(date)s %(username)s <%(email)s> - %(version)s-1\n" % template_data)
 
         for git_log in self.builder.git.log():
             rendered_template.write('- %s' % git_log)
@@ -156,16 +166,20 @@ class RpmBuilder():
 
         self.project.save()
 
+        if environment == None:
+            environment = os.environ
+
         rpm_cmd = self.builder._exec([ "rpmbuild", "--define", "_topdir %s" % rpm_dir, "-ba", spec_filename ],
-            cwd=self.builder.workdir, env=rvm_env, stdout=self.stdout, stderr=self.stderr
+            cwd=self.builder.workdir, env=environment, stdout=self.stdout, stderr=self.stderr
         )
 
         rpm_cmd.wait()
 
     def upload(self, branch):
         repository_url, user, passwd = self.project.repository()
+        repository_dir = self.distribution
         rpm_dir = os.path.join(self.builder.workspace, 'rpm')
-        rpm_prefix = "%s-%s-%s" % (self.project.name, self.project.version(), self.project.release)
+        rpm_prefix = "%s-%s-1" % (self.project.name, self.project.version())
         list = []
         for path, dirs, files in os.walk(rpm_dir):
             if os.path.isdir(path):
@@ -176,23 +190,24 @@ class RpmBuilder():
                     except Exception, e:
                         log.error(e)
 
-        ftp = ftplib.FTP()
-        try:
-            ftp.connect(repository_url)
-            ftp.login(user, passwd)
-            ftp.cwd('/')
-        except ftplib.error_reply, e:
-            log.error('Cannot conect to ftp server %s' % e)
-
-        for file in list:
-            filename = os.path.basename(file)
+        if len(list) > 0:
+            ftp = ftplib.FTP()
             try:
-                if os.path.isfile(file):
-                    f = open(file, 'rb')
-                    ftp.storbinary('STOR %s' % filename, f)
-                    f.close()
-                    log.info("File %s has been successfully sent to ftp server %s" % (filename, self.ftp_host))
+                ftp.connect(repository_url)
+                ftp.login(user, passwd)
+                ftp.cwd(repository_dir)
             except ftplib.error_reply, e:
-                log.error(e)
+                log.error('Cannot conect to ftp server %s' % e)
 
-        ftp.quit()
+            for file in list:
+                filename = os.path.basename(file)
+                try:
+                    if os.path.isfile(file):
+                        f = open(file, 'rb')
+                        ftp.storbinary('STOR %s' % filename, f)
+                        f.close()
+                        log.info("File %s has been successfully sent to repository_url %s" % (filename, repository_url))
+                except ftplib.error_reply, e:
+                    log.error(e)
+
+            ftp.quit()
