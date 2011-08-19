@@ -14,6 +14,7 @@ from config import BrickConfig
 from build_info import BuildInfo
 
 from git import Git
+from glob import glob
 
 class RpmBuilder():
 
@@ -21,6 +22,7 @@ class RpmBuilder():
         self.builder = builder
         self.project = self.builder.project
         self.distribution = None
+        self.version = None
 
     def dos2unix(self, file):
         f = open(file, 'r').readlines()
@@ -32,9 +34,8 @@ class RpmBuilder():
         
     def build(self, branch, last_tag=None):
         templates_dir = os.path.join(self.builder.templates_dir, 'rpm')
-        rpm_dir = os.path.join(self.builder.workspace, 'rpm')
+        rpm_dir = os.path.join(self.builder.workdir, 'redhat')
         spec_filename = os.path.join(rpm_dir, 'SPECS', "%s.spec" % self.project.name)
-        dir_prefix = "%s-%s" % (self.project.name, self.project.version())
 
         self.build_info = BuildInfo(self.project.name)
         logfile = os.path.join(self.builder.workspace, 'log', '%s.%s.log' % (self.project.name, self.build_info.build_id))
@@ -42,28 +43,54 @@ class RpmBuilder():
         self.stdout = open(logfile, 'a+')
         self.stderr = self.stdout
 
+        if last_tag != None and last_tag.startswith('stable'):
+            self.project.version('stable', last_tag.split('_')[1])
+            self.build_info.version(self.project.version('stable'))
+            self.version = self.project.version('stable')
+            self.distribution = 'stable'
+
+        elif last_tag != None and last_tag.startswith('testing'):
+            self.project.version('testing', last_tag.split('_')[1])
+            self.build_info.version(self.project.version('testing'))
+            self.version = self.project.version('testing')
+            self.distribution = 'testing'
+
+        else:
+            """
+            otherwise it should change the distribution to unstable
+            """
+            if self.project.version(branch):
+                version_list = self.project.version(branch).split('.')
+                version_list[len(version_list) - 1] = str(int(version_list[len(version_list) - 1]) + 1)
+                self.project.version(branch, '.'.join(version_list))
+                self.build_info.version(self.project.version(branch))
+                self.version = self.project.version(branch)
+                self.distribution = 'unstable'
+
+        dir_prefix = "%s-%s" % (self.project.name, self.version)
+
         for dir in ('SOURCES', 'SPECS', 'RPMS', 'SRPMS', 'BUILD', 'TMP'):
-            if not os.path.isdir(os.path.join(rpm_dir, dir)):
-                os.makedirs(os.path.join(rpm_dir, dir))
+            if os.path.isdir(os.path.join(rpm_dir, dir)):
+                shutil.rmtree(os.path.join(rpm_dir, dir))
+            os.makedirs(os.path.join(rpm_dir, dir))
         
         build_dir = os.path.join(rpm_dir, 'TMP', self.project.name)
-        
-        if not os.path.isdir(build_dir):
-            os.makedirs(build_dir)
+        os.makedirs(build_dir)
 
-        source_file = os.path.join(rpm_dir, 'SOURCES', '%s.tar.gz' % dir_prefix)
+        if os.path.isdir(os.path.join(rpm_dir, dir_prefix)):
+            shutil.rmtree(os.path.join(rpm_dir, dir_prefix))
+        os.makedirs(os.path.join(rpm_dir, dir_prefix))
+
+        subprocess.call(["cp -rP `ls -a | grep -Ev '\.$|\.\.$|debian$|redhat$'` %s" % 
+            os.path.join(rpm_dir, dir_prefix)],
+            cwd=self.builder.workdir,
+            shell=True
+        )
 
         cur_dir = os.getcwd()
-        os.chdir(self.builder.workspace)
+        os.chdir(rpm_dir)
 
-        if os.path.isdir(dir_prefix):
-            shutil.rmtree(dir_prefix)
-
-        shutil.copytree(self.project.name, dir_prefix)
-
-        if os.path.isfile(source_file):
-            os.unlink(source_file)
-
+        source_file = os.path.join(rpm_dir, 'SOURCES', '%s.tar.gz' % dir_prefix)
         tar = tarfile.open(source_file, 'w:gz')
         tar.add(dir_prefix)
         tar.close()
@@ -75,7 +102,7 @@ class RpmBuilder():
 
         if not self.project.install_cmd:
 
-            self.project.install_cmd = 'cp -r \`ls | grep -Ev "debian|rpm"\` %s/%s/%s' % (
+            self.project.install_cmd = 'cp -r \`ls -a | grep -Ev "\.$|\.\.$|debian$"\` %s/%s/%s' % (
                     build_dir,
                     self.project.install_prefix,
                     self.project.name
@@ -83,7 +110,7 @@ class RpmBuilder():
 
         template_data = {
                 'name': self.project.name,
-                'version': self.project.version(branch),
+                'version': self.version,
                 'build_dir': build_dir,
                 'build_cmd': self.project.build_cmd,
                 'install_cmd': self.builder.mod_install_cmd,
@@ -135,12 +162,6 @@ class RpmBuilder():
                 for param in os.environ.keys():
                     if param.find('PROXY') != -1:
                         rvm_env[param] = os.environ[param]
-                try:
-                    os.environ.pop('PATH')
-                    os.environ.pop('GEM_HOME')
-                    os.environ.pop('BUNDLER_PATH')
-                except Exception, e:
-                    pass
                 rvm_env.update(os.environ)
 
             environment = rvm_env
@@ -175,39 +196,49 @@ class RpmBuilder():
 
         rpm_cmd.wait()
 
-    def upload(self, branch):
-        repository_url, user, passwd = self.project.repository()
-        repository_dir = self.distribution
-        rpm_dir = os.path.join(self.builder.workspace, 'rpm')
-        rpm_prefix = "%s-%s-1" % (self.project.name, self.project.version())
-        list = []
         for path, dirs, files in os.walk(rpm_dir):
             if os.path.isdir(path):
                 for file in (os.path.join(path, file) for file in files):
                     try:
-                        if os.path.isfile(file) and file.find(rpm_prefix) != -1:
-                            list.append(file)
+                        if os.path.isfile(file) and file.endswith('.rpm'):
+                            shutil.copy(file, self.builder.workspace)
                     except Exception, e:
                         log.error(e)
 
-        if len(list) > 0:
-            ftp = ftplib.FTP()
-            try:
-                ftp.connect(repository_url)
-                ftp.login(user, passwd)
-                ftp.cwd(repository_dir)
-            except ftplib.error_reply, e:
-                log.error('Cannot conect to ftp server %s' % e)
+        shutil.rmtree(rpm_dir)
 
-            for file in list:
-                filename = os.path.basename(file)
+    def upload(self, branch):
+        repository_url, user, passwd = self.project.repository()
+        repository_dir = self.distribution
+
+        files = glob(os.path.join(self.builder.workspace,
+            '%s-%s%s' % (self.project.name,
+                self.version,
+                '*.rpm')
+            )
+        )
+
+        if len(files) > 0:
+            if repository_dir != None:
+                ftp = ftplib.FTP()
                 try:
-                    if os.path.isfile(file):
-                        f = open(file, 'rb')
-                        ftp.storbinary('STOR %s' % filename, f)
-                        f.close()
-                        log.info("File %s has been successfully sent to repository_url %s" % (filename, repository_url))
+                    ftp.connect(repository_url)
+                    log.error('Repository: %s' % repository_url)
+                    ftp.login(user, passwd)
+                    ftp.cwd(repository_dir)
                 except ftplib.error_reply, e:
-                    log.error(e)
+                    log.error('Cannot conect to ftp server %s' % e)
+
+                for file in files:
+                    filename = os.path.basename(file)
+                    try:
+                        if os.path.isfile(file):
+                            f = open(file, 'rb')
+                            ftp.storbinary('STOR %s' % filename, f)
+                            f.close()
+                            log.info("File %s has been successfully sent to repository_url %s" % (filename, repository_url))
+                    except ftplib.error_reply, e:
+                        log.error(e)
 
             ftp.quit()
+
