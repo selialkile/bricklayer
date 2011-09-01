@@ -38,9 +38,13 @@ class Git(object):
         if branch in self.branches():
             git_cmd = self._exec_git(['git', 'checkout', branch], cwd=self.workdir)
             git_cmd.wait()
-        elif branch != '' and branch != 'master':
-            git_cmd = self._exec_git(['git', 'checkout', '-b', branch, '--track', 'origin/%s' % branch], cwd=self.workdir)
-            git_cmd.wait()
+
+    def checkout_remote_branch(self, branch):
+        git_cmd = self._exec_git(
+                ['git', 'checkout', '-b', branch, '--track', 'origin/%s' % branch], 
+                cwd=self.workdir
+            )
+        git_cmd.wait()
 
     def branches(self):
         branches_dir = os.path.join(self.workdir, '.git', 'refs', 'heads')

@@ -89,6 +89,9 @@ class Builder:
                     if not os.path.isdir(self.git.workdir):
                         self.git.clone(branch)
                     else:
+                        if branch != "master":
+                            self.git.checkout_remote_branch(branch)
+
                         self.git.checkout_tag(tag=".")
                         self.git.pull()
                 except Exception, e:
