@@ -89,9 +89,6 @@ class Builder:
                     if not os.path.isdir(self.git.workdir):
                         self.git.clone(branch)
                     else:
-                        if branch != "master":
-                            self.git.checkout_remote_branch(branch)
-
                         self.git.checkout_tag(tag=".")
                         self.git.pull()
                 except Exception, e:
@@ -118,10 +115,10 @@ class Builder:
                 self.git.checkout_branch(branch)
 
                 if build == 1:
-                    log.info('Generating packages for %s on %s'  % (self.project, self.workdir))
+                    log.info('Generating packages for %s on %s'  % (self.project.name, self.workdir))
                     self.package_builder.build(branch)
                     self.package_builder.upload(branch)
-                    log.info("build complete")
+                    log.info("build complete for %s" % self.project.name)
 
                 self.workdir = self.oldworkdir
                 self.git.workdir = self.workdir
