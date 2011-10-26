@@ -15,6 +15,7 @@ from build_info import BuildInfo
 
 from git import Git
 from glob import glob
+from types import *
 
 class RpmBuilder():
 
@@ -137,15 +138,8 @@ class RpmBuilder():
             rvmexec = open(rvm_rc).read()
             log.info("RVMRC: %s" % rvmexec)
 
-            # Fix to rvm users that cannot read the f* manual
-            # for this i need to fix their stupid .rvmrc
-            if rvmexec.split()[1] == "use":
-                rvmexec = rvmexec.split()[2]
-            else:
-                rvmexec = rvmexec.split()[1]
-            
             # I need the output not to log on file
-            rvm_cmd = subprocess.Popen('/usr/local/rvm/bin/rvm info %s' % rvmexec,
+            rvm_cmd = subprocess.Popen('/usr/local/rvm/bin/rvm info %s' % rvmexec.split()[1],
                     shell=True, stdout=subprocess.PIPE)
             rvm_cmd.wait()
 
@@ -153,12 +147,18 @@ class RpmBuilder():
             for line in rvm_cmd.stdout.readlines():
                 if 'PATH' in line or 'HOME' in line:
                     name, value = line.split()
-                    rvm_env[name.strip(':')] = value.replace('"', '')
+                    rvm_env[name.strip(':')] = value.strip('"')
             rvm_env['HOME'] = os.environ['HOME']
 
             if len(rvm_env.keys()) < 1:
                 rvm_env = os.environ
             else:
+                try:
+                    os.environ.pop('PATH')
+                    os.environ.pop('GEM_HOME')
+                    os.environ.pop('BUNDLER_PATH')
+                except Exception, e:
+                    pass
                 for param in os.environ.keys():
                     if param.find('PROXY') != -1:
                         rvm_env[param] = os.environ[param]
@@ -187,7 +187,7 @@ class RpmBuilder():
 
         self.project.save()
 
-        if environment == None:
+        if type(environment) is NoneType:
             environment = os.environ
 
         rpm_cmd = self.builder._exec([ "rpmbuild", "--define", "_topdir %s" % rpm_dir, "-ba", spec_filename ],
