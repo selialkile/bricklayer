@@ -33,13 +33,7 @@ def build_project(kargs):
     defered = threads.deferToThread(builder.build_project, force, branch)
 
 
-class BuilderWorker(object):
-    queue = "build"
-    @staticmethod
-    def perform(project_name):
-        build_project(dict(project=project_name, force=False, branch=None))
-
-class Builder(object):
+class Builder:
     def __init__(self, project):
         self.workspace = BrickConfig().get('workspace', 'dir')
         self.project = Projects(project)
