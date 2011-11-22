@@ -26,7 +26,6 @@ class DebBuilder():
         templates = {}
         templates_dir = os.path.join(self.builder.templates_dir, 'deb')
         debian_dir = os.path.join(self.builder.workdir, 'debian')
-        control_data_original = None
         control_data_new = None
 
         self.build_info = BuildInfo(self.project.name)
@@ -53,6 +52,10 @@ class DebBuilder():
                 'email': self.project.email,
                 'date': time.strftime("%a, %d %h %Y %T %z"),
             }
+        
+        control = os.path.join(self.builder.workdir, 'debian', 'control')
+        if os.path.isfile(control)
+            os.rename(control, "%s.save" % control)
 
         def read_file_data(f):
             template_fd = open(os.path.join(templates_dir, f))
@@ -154,12 +157,12 @@ class DebBuilder():
         
         dpkg_cmd.wait()
         
-        control = os.path.join(self.builder.workdir, 'debian', 'control')
-        if os.path.isfile(control) and control_data_original:
-            open(control, 'w').write(control_data_original)
-
         clean_cmd = self.builder._exec(['dh', 'clean'], cwd=self.builder.workdir)
         clean_cmd.wait()
+
+        control = os.path.join(self.builder.workdir, 'debian', 'control')
+        if os.path.isfile(control)
+            os.rename("%s.save" % control, control)
 
     def upload(self, branch):
         changes_file = glob.glob('%s/%s_%s_*.changes' % (self.builder.workspace, self.project.name, self.project.version(branch)))[0]
