@@ -154,8 +154,8 @@ class Build(cyclone.web.RequestHandler):
         self.write(cyclone.escape.json_encode(builds))
 
 class Log(cyclone.web.RequestHandler):
-    def get(self, project, build):
-        build_info = BuildInfo(project, build)
+    def get(self, project, bid):
+        build_info = BuildInfo(project, bid)
         if os.path.isfile(build_info.log()):
             self.write(open(build_info.log()).read())
 
@@ -207,7 +207,7 @@ restApp = cyclone.web.Application([
     (r'/branch/(.*)', Branch),
     (r'/build/(.*)', Build),
     (r'/group/?(.*)', Group),
-    (r'/log/(.*)/(.*)', Log),
+    (r'/log/(.*)/+(.*)', Log),
     (r'/static/(.*)', cyclone.web.StaticFileHandler, {'path': brickconfig.get('static', 'dir')}),
     (r'/repo/(.*)', cyclone.web.StaticFileHandler, {'path': brickconfig.get('workspace', 'dir')}),
     (r'/', Main),

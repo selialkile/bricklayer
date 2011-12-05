@@ -68,7 +68,16 @@ class Builder:
     def _exec(self, cmd, *args, **kwargs):
         return subprocess.Popen(cmd, *args, **kwargs)
 
+    def wait_for_build_lock(self):
+        while (self.project.is_building() == True):
+            log.debug("project: %s building waiting 30 sec", self.project.name)
+            time.sleep(30)
+
     def build_project(self, force=False, a_branch=None):
+        if self.project.is_building():
+            self.wait_for_build_lock()
+
+        self.project.start_building()
         try:
             if force:
                 build = 1
@@ -138,4 +147,6 @@ class Builder:
 
         except Exception, e:
             log.exception("build failed: %s" % repr(e))
+        finally:
+            self.project.stop_building()
 

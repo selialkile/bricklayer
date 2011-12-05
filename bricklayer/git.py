@@ -58,12 +58,15 @@ class Git(object):
         tags = self.tags(tag_type)
         check = []
         for tag in tags:
-            tag_v = tag.split('_')[1].split("-")[0]
-            check.append(map(int, tag_v.split('.')))
+            if re.match("(\w+)_(\d+\.\d+\.\d+)", tag):
+                tag_v = tag.split('_')[1].split("-")[0]
+                check.append(map(int, tag_v.split('.')))
+            else:
+                continue
         if len(check) > 0:
             return tag_type + "_%d.%d.%d" % tuple(max(check))
         else:
-            return ''
+            return ''    
 
     def tags(self, tag_type):
         try:

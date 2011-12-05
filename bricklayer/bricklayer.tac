@@ -22,19 +22,7 @@ from dreque import Dreque, DrequeWorker
 
 class BricklayerProtocol(basic.LineReceiver):
     def lineReceived(self, line):
-        def onError(err):
-            logging.error("Command fail.")
-
-        def onResponse(message, *args, **kwargs):
-            self.transport.write("ok.\r\n")
-
-        command, arg = line.split(':')
-        if 'build' in command:
-            project_name = arg
-            self.transport.write("building %s\r\n" % project_name)
-            defered = threads.deferToThread(self.factory.build_project, project_name, force=True)
-            defered.addCallback(onResponse, onError)
-    
+        pass
     def connectionMade(self):
         pass
 
@@ -66,7 +54,7 @@ brickconfig = BrickConfig()
 bricklayer = service.MultiService()
 
 factory = BricklayerFactory()
-brickService = internet.TCPServer(8080, factory)
+brickService = internet.UNIXServer("/var/run/bricklayer.sock", factory)
 restService = internet.TCPServer(80, restApp)
 
 brickService.setServiceParent(bricklayer)

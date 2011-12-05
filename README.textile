@@ -4,7 +4,7 @@ Bricklayer builds packages to help you automate builds and upload them to reposi
 
 h2. Requirements
 
-Bricklayer uses twisted to serve a restful interface as well as the scheduler interface, it also needs Redis 2.0 or higher to store projects. Depending on the linux/unix flavor, you have to install Redis by yourself sine not all the distros include redis-2.0 yet.
+Bricklayer uses twisted to serve a restful interface as well as the scheduler interface, it also needs Redis 2.0 or higher to store projects. Depending on the linux/unix flavor, you have to install Redis by yourself since not all the distros include redis-2.0 yet.
 
 h2. Installation
 
@@ -12,7 +12,7 @@ Bricklayer has a debian directory ready to be built. To do so under a debian-bas
 
 <pre>
 export PYTHONPATH="."
-apt-get -y install build-essential devscripts cdbs python-twisted python-setuptools python-simplejson python-redis redis-server
+apt-get -y install build-essential devscripts cdbs python-twisted python-setuptools python-simplejson redis-server
 apt-get -y install python2.5-dev && easy_install multiprocessing ## if using Python 2.5 ##
 dpkg-buildpackage -rfakeroot # (inside the project directory)
 dpkg -i ../bricklayer*.deb # were * is your architecture and version

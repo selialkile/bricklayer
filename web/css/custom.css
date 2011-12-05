@@ -1,63 +1,8 @@
-* { margin: 0; padding: 0; }
- 
 body { 
-    /* font: 62.5% "Trebuchet MS", sans-serif; */
-    font: 12px "Verdana", sans-serif;
-    padding: 0;
-    margin: 0;
+    padding-top: 40px;
 }
 
-/* Menu */
-.menu a:link, a:visited {
-    display: block;
-    width: 120px;
-    font-weight: bold;
-    color: #FFFFFF; 
-    text-align: center;
-    padding: 2px;
-    text-decoration: none;
-    text-transform: uppercase;
-}
-.menu a:hover, a:active {
-    text-decoration: underline;
-}
 
-.menu li { float: left; }
-.menu ul { list-style-type: none; top: 5px; right: 0px; position: absolute; display: block; padding: 10px }
-#menu { overflow: hidden; padding: 0; }
-
-/* Container */
-#container {
-    width: 760px;
-    margin: auto;
-    padding: 0;
-    text-align: left;
-    background-color: #fff;
-}
-
-/* Header */
-.top-header h2 { padding: 10px; margin: 10px }
-.top-header {
-    width: 100%;
-    background-color: black;
-    overflow: hidden; 
-    padding: 0;
-}
-
-#header-content {
-    position: relative;
-    width: 760px;
-    text-align: left;
-    margin: 0px auto;
-}
-
-#content .padding { padding: 25px; }
-#content {
-    /* margin-right: 280px; */
-    /* line-height: 18px; */
-    display: block;
-    width: 720px;
-}
 
 #content p {
     margin: 0;
@@ -66,37 +11,6 @@ body {
     font-size: 12px;
 }
 
-section.main-section { 
-    margin: 10px; 
-    width: 100%; 
-    border: 1px solid #CCC;
-    overflow: hidden; 
-}
-
-.main { 
-    padding: 20px 30px;
-    font-size: 10px;
-    margin: -30px -30px 30px;
-}
-
-header.main-header {
-    background: #CCC;
-    border-bottom: 1px solid #d0d6e4;
-    padding: 20px 30px;
-    position: relative;
-}
-
-header.main-header h2 {
-    font-size: 24px;
-    margin: 0;
-    padding: 0;
-}
-
-header.main-header button {
-    position: absolute;
-    top: 20px;
-    right: 30px;
-}
 
 a.name {
   color: #111;
@@ -105,16 +19,6 @@ a.name {
   text-decoration: none;
 }
 
-tr:hover a.name {
-    text-decoration: underline;
-}
-
-.url {
-    color: #999;
-    font-weight: normal;
-    display: inline-block;
-    width: 530px;
-}
 
 tr.project td {
     overflow: hidden;
@@ -124,8 +28,8 @@ tr.project td {
     color: #aaa;
     font-weight: bold;
     float: right;
-    margin-top: -15px;
     list-style: none;
+    margin-top: -40px;
 }
 
 .build-log a {
@@ -147,26 +51,12 @@ tr.project td {
     font-size: 10px;
 }
 
-.details .tablesorter {
-    margin-bottom: -10px;
+.details {
+    margin-bottom: 10px;
 }
 
-table.groups-table {
-    padding: 30px;
-}
-
-table.list {
-    padding: 20px;
-    width: 100%;
-}
-
-table.list tr > td {
-    border-bottom: 1px solid #ddd;
-    padding: 10px;
-}
-
-table.list tr:last-child td {
-    border-bottom: none;
+.projects-list {
+    border-top: 0px;
 }
 
 span {
@@ -174,8 +64,16 @@ span {
     font-size: 12px;
 }
 
-label, input { display:block; }
-input.text { margin-bottom:12px; width:95%; padding: .4em; }
-fieldset { padding:0; border:0; margin-top:25px; }
 .ui-dialog .ui-state-error { padding: .3em; }
 
+div.scroll {
+    height: 400px;
+    width: auto;
+    overflow: auto;
+    padding: 8px;
+}
+
+#create {
+    float: right;
+    margin-top: -40px;
+}

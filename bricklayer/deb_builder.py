@@ -53,9 +53,9 @@ class DebBuilder():
                 'date': time.strftime("%a, %d %h %Y %T %z"),
             }
         
-        control = os.path.join(self.builder.workdir, 'debian', 'control')
-        if os.path.isfile(control)
-            os.rename(control, "%s.save" % control)
+        changelog = os.path.join(self.builder.workdir, 'debian', 'changelog')
+        if os.path.isfile(changelog):
+            os.rename(changelog, "%s.save" % changelog)
 
         def read_file_data(f):
             template_fd = open(os.path.join(templates_dir, f))
@@ -160,17 +160,17 @@ class DebBuilder():
         clean_cmd = self.builder._exec(['dh', 'clean'], cwd=self.builder.workdir)
         clean_cmd.wait()
 
-        control = os.path.join(self.builder.workdir, 'debian', 'control')
-        if os.path.isfile(control)
-            os.rename("%s.save" % control, control)
+        if os.path.isfile("%s.save" % changelog):
+            os.rename("%s.save" % changelog, changelog)
 
     def upload(self, branch):
         changes_file = glob.glob('%s/%s_%s_*.changes' % (self.builder.workspace, self.project.name, self.project.version(branch)))[0]
         distribution, files = self.parse_changes(changes_file)
+        self.local_repo(distribution, files)
         self.upload_files(distribution, files)
         upload_file = changes_file.replace('.changes', '.upload')
         open(upload_file, 'w').write("done")
-        
+   
     def parse_changes(self, changes_file):
         content = open(changes_file).readlines()
         go = 0
@@ -194,6 +194,18 @@ class DebBuilder():
             files.append(filename[len(filename) - 1])
         return distribution, files
 
+    def local_repo(self, distribution, files):
+        repo_path = os.path.join(BrickConfig().get("local_repo", "dir"), self.project.group_name, distribution)
+        if not os.path.isdir(repo_path):
+            os.makedirs(repo_path)
+
+        os.chdir(self.builder.workspace)
+
+        for f in files:
+            log.info("copying to local repo: %s/%s" % (repo_path, f))
+            shutil.copy(f, os.path.join(repo_path, f))
+
+     
     def upload_files(self, distribution, files):
         repository_url, user, passwd = self.project.repository()
         if not repository_url:

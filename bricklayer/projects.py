@@ -23,7 +23,22 @@ class Projects(ModelBase):
 
     def __dir__(self):
         return ['name', 'git_url', 'install_cmd', 'build_cmd', 'email', 'username', 'release', 'group_name']
-    
+   
+    @transaction
+    def start_building(self):
+        self.redis_cli.incr('build_lock:%s' % self.name)
+
+    @transaction
+    def is_building(self):
+        build_lock = self.redis_cli.get('build_lock:%s' % self.name)
+        if build_lock and int(build_lock) > 0:
+            return True
+        return False
+
+    @transaction
+    def stop_building(self):
+        self.redis_cli.decr('build_lock:%s' % self.name)
+
     @transaction
     def add_branch(self, branch):
         self.redis_cli.rpush('branches:%s' % self.name, branch)

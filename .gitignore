@@ -3,3 +3,4 @@ static/Build
 *.pyc
 */**.swp
 *.swp
+*.pid
