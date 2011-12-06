@@ -100,6 +100,7 @@ class Builder:
                     try:
                         if not os.path.isdir(self.git.workdir):
                             self.git.clone(branch)
+                            self.git.checkout_remote_branch(branch)
                         else:
                             self.git.checkout_tag(tag=".")
                             self.git.pull()
