@@ -12,12 +12,15 @@ sys.path.append(os.path.dirname(__file__))
 import pystache
 import git
 
-from twisted.internet import threads
+from twisted.internet import threads, reactor
 from config import BrickConfig
 from projects import Projects
 
 from rpm_builder import RpmBuilder
 from deb_builder import DebBuilder
+from dreque import Dreque
+
+queue = Dreque(brickconfig.get('redis', 'redis-server'))
 
 logging.basicConfig(filename='/var/log/bricklayer-builder.log', level=logging.DEBUG)
 log = logging.getLogger('builder')
@@ -68,85 +71,85 @@ class Builder:
     def _exec(self, cmd, *args, **kwargs):
         return subprocess.Popen(cmd, *args, **kwargs)
 
-    def wait_for_build_lock(self):
-        while (self.project.is_building() == True):
+    def enqueue_build(self, a_branch):
+        if self.project.is_building():
+            reactor.callInThread(queue.enqueue, 'build', 'builder.build_project', {'project': self.project.name, 'branch': a_branch, 'force': True})
             log.debug("project: %s building waiting 30 sec", self.project.name)
-            time.sleep(30)
 
     def build_project(self, force=False, a_branch=None):
         if self.project.is_building():
-            self.wait_for_build_lock()
-
-        self.project.start_building()
-        try:
-            if force:
-                build = 1
-            else:
-                build = 0
-            
-            """
-            force build for a specific branch only if a_branch is not None
-            """
-            if a_branch:
-                branches = [a_branch]
-            else:
-                branches = self.project.branches()
-
-            for branch in branches:
-                log.debug("Checking project: %s" % self.project.name)
-                try:
-                    if not os.path.isdir(self.git.workdir):
-                        self.git.clone(branch)
-                    else:
-                        self.git.checkout_tag(tag=".")
-                        self.git.pull()
-                except Exception, e:
-                    log.exception('Could not clone or update repository')
-                    raise
-
-                if os.path.isdir(self.workdir):
-                    os.chdir(self.workdir)
-
-                last_commit = self.git.last_commit(branch)
-
-                if self.project.last_commit(branch) != last_commit:
-                    self.project.last_commit(branch, last_commit)
+            self.enqueue_build(a_branch)
+        else:
+            self.project.start_building()
+            try:
+                if force:
                     build = 1
-                    
-                self.project.save()
+                else:
+                    build = 0
+                
+                """
+                force build for a specific branch only if a_branch is not None
+                """
+                if a_branch:
+                    branches = [a_branch]
+                else:
+                    branches = self.project.branches()
 
-                self.oldworkdir = self.workdir
-                if not os.path.isdir("%s-%s" % (self.workdir, branch)):
-                    shutil.copytree(self.workdir, "%s-%s" % (self.workdir, branch))
-                self.workdir = "%s-%s" % (self.workdir, branch)
-                self.git.workdir = self.workdir
-                self.git.pull() 
-                self.git.checkout_branch(branch)
+                for branch in branches:
+                    log.debug("Checking project: %s" % self.project.name)
+                    try:
+                        if not os.path.isdir(self.git.workdir):
+                            self.git.clone(branch)
+                        else:
+                            self.git.checkout_tag(tag=".")
+                            self.git.pull()
+                    except Exception, e:
+                        log.exception('Could not clone or update repository')
+                        raise
 
-                if build == 1:
-                    log.info('Generating packages for %s on %s'  % (self.project.name, self.workdir))
-                    self.package_builder.build(branch)
-                    self.package_builder.upload(branch)
-                    log.info("build complete for %s" % self.project.name)
+                    if os.path.isdir(self.workdir):
+                        os.chdir(self.workdir)
 
-                self.workdir = self.oldworkdir
-                self.git.workdir = self.workdir
-            
-            self.git.checkout_branch('master')
-            
-            branch = 'master'
-            for tag_type in ('testing', 'stable'):
-                log.info('Last tag found: %s' % self.project.last_tag(tag_type))
-                if self.project.last_tag(tag_type) != self.git.last_tag(tag_type):
-                    self.project.last_tag(tag_type, self.git.last_tag(tag_type))
-                    if self.project.last_tag(tag_type):
-                        self.git.checkout_tag(self.project.last_tag(tag_type))
-                        self.package_builder.build(branch, self.project.last_tag(tag_type))
-                        self.package_builder.upload(tag_type)
+                    last_commit = self.git.last_commit(branch)
+
+                    if self.project.last_commit(branch) != last_commit:
+                        self.project.last_commit(branch, last_commit)
+                        build = 1
+                        
+                    self.project.save()
+
+                    self.oldworkdir = self.workdir
+                    if not os.path.isdir("%s-%s" % (self.workdir, branch)):
+                        shutil.copytree(self.workdir, "%s-%s" % (self.workdir, branch))
+                    self.workdir = "%s-%s" % (self.workdir, branch)
+                    self.git.workdir = self.workdir
+                    self.git.pull() 
                     self.git.checkout_branch(branch)
 
-        except Exception, e:
-            log.exception("build failed: %s" % repr(e))
-        finally:
-            self.project.stop_building()
+                    if build == 1:
+                        log.info('Generating packages for %s on %s'  % (self.project.name, self.workdir))
+                        self.package_builder.build(branch)
+                        self.package_builder.upload(branch)
+                        log.info("build complete for %s" % self.project.name)
+
+                    self.workdir = self.oldworkdir
+                    self.git.workdir = self.workdir
+                
+                self.git.checkout_branch('master')
+                
+                branch = 'master'
+                for tag_type in ('testing', 'stable'):
+                    log.info('Last tag found: %s' % self.project.last_tag(tag_type))
+                    if self.project.last_tag(tag_type) != self.git.last_tag(tag_type):
+                        self.project.last_tag(tag_type, self.git.last_tag(tag_type))
+                        if self.project.last_tag(tag_type):
+                            self.git.checkout_tag(self.project.last_tag(tag_type))
+                            self.package_builder.build(branch, self.project.last_tag(tag_type))
+                            self.package_builder.upload(tag_type)
+                        self.git.checkout_branch(branch)
+
+            except Exception, e:
+                log.exception("build failed: %s" % repr(e))
+            finally:
+                self.project.stop_building()
 
