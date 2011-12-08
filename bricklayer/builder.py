@@ -20,7 +20,7 @@ from rpm_builder import RpmBuilder
 from deb_builder import DebBuilder
 from dreque import Dreque
 
-queue = Dreque(brickconfig.get('redis', 'redis-server'))
+queue = Dreque(BrickConfig().get('redis', 'redis-server'))
 
 logging.basicConfig(filename='/var/log/bricklayer-builder.log', level=logging.DEBUG)
 log = logging.getLogger('builder')

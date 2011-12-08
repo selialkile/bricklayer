@@ -167,7 +167,7 @@ class Check(cyclone.web.RequestHandler):
 
 class Group(cyclone.web.RequestHandler):
     def post(self, *args):
-        if args[0]:
+        if len(args) > 0:
             name = args[0]
             group = Groups(name)
             for key, value in self.request.arguments.iteritems():
@@ -206,6 +206,7 @@ restApp = cyclone.web.Application([
     (r'/project/?(.*)', Project),
     (r'/branch/(.*)', Branch),
     (r'/build/(.*)', Build),
+    (r'/group', Group),
     (r'/group/?(.*)', Group),
     (r'/log/(.*)/+(.*)', Log),
     (r'/static/(.*)', cyclone.web.StaticFileHandler, {'path': brickconfig.get('static', 'dir')}),
