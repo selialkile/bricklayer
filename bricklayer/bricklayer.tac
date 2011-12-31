@@ -51,11 +51,14 @@ class BricklayerFactory(protocol.ServerFactory):
         sched_task.start(30.0)
 
 brickconfig = BrickConfig()
+unix_socket = brickconfig.get('server', 'unix')
+network_port = brickconfig.get('server', 'port')
+
 bricklayer = service.MultiService()
 
 factory = BricklayerFactory()
-brickService = internet.UNIXServer("/var/run/bricklayer.sock", factory)
-restService = internet.TCPServer(80, restApp)
+brickService = internet.UNIXServer(unix_socket, factory)
+restService = internet.TCPServer(int(network_port), restApp)
 
 brickService.setServiceParent(bricklayer)
 restService.setServiceParent(bricklayer)
