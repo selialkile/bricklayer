@@ -20,14 +20,18 @@ from rpm_builder import RpmBuilder
 from deb_builder import DebBuilder
 from dreque import Dreque
 
-queue = Dreque(BrickConfig().get('redis', 'redis-server'))
+config = BrickConfig()
+redis_server = config.get('redis', 'redis-server')
+log_file = config.get('log', 'file')
 
-logging.basicConfig(filename='/var/log/bricklayer-builder.log', level=logging.DEBUG)
+queue = Dreque(redis_server)
+
+logging.basicConfig(filename=log_file, level=logging.DEBUG)
 log = logging.getLogger('builder')
 
 def build_project(kargs):
     project, branch, force = kargs['project'], kargs['branch'], kargs['force']
-    logging.basicConfig(filename='/var/log/bricklayer-builder.log', level=logging.DEBUG)
+    logging.basicConfig(filename=log_file, level=logging.DEBUG)
     log = logging.getLogger('builder-worker')
     log.debug("> %s %s %s" % (project, branch, force))
 
