@@ -71,33 +71,35 @@ class Project(cyclone.web.RequestHandler):
             log.err(e)
             self.finish(cyclone.escape.json_encode({'status': 'fail'}))
         self.finish(cyclone.escape.json_encode({'status': 'build scheduled'}))
-    
+
     def get(self, name='', branch='master'):
         try:
             if name:
                     project = Projects(name)
-                    reply = {'name': project.name, 
+                    reply = {'name': project.name,
                             'branch': project.branches(),
                             'group_name': project.group_name,
-                            'git_url': project.git_url, 
+                            'git_url': project.git_url,
                             'version': project.version(),
                             'last_tag_testing': project.last_tag(tag_type='testing'),
                             'last_tag_stable': project.last_tag(tag_type='stable'),
+                            'last_tag_unstable': project.last_tag(tag_type='unstable'),
                             'last_commit': project.last_commit(branch)}
-                    
+
 
             else:
                 projects = Projects.get_all()
                 reply = []
                 for project in projects:
                     reply.append(
-                            {'name': project.name, 
+                            {'name': project.name,
                             'branch': project.branches(),
                             'group_name': project.group_name,
-                            'git_url': project.git_url, 
+                            'git_url': project.git_url,
                             'version': project.version(),
                             'last_tag_testing': project.last_tag(tag_type='testing'),
                             'last_tag_stable': project.last_tag(tag_type='stable'),
+                            'last_tag_unstable': project.last_tag(tag_type='unstable'),
                             'last_commit': project.last_commit(branch)
                             })
 
@@ -180,7 +182,7 @@ class Group(cyclone.web.RequestHandler):
             group.repo_user = self.get_argument('repo_user')
             group.repo_passwd = self.get_argument('repo_passwd')
             group.save()
-    
+
 
     def get(self, *args):
         if len(args) > 1:

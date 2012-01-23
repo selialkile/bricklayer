@@ -52,7 +52,7 @@ class DebBuilder():
                 'email': self.project.email,
                 'date': time.strftime("%a, %d %h %Y %T %z"),
             }
-        
+
         changelog = os.path.join(self.builder.workdir, 'debian', 'changelog')
         if os.path.isfile(changelog):
             os.rename(changelog, "%s.save" % changelog)
@@ -65,12 +65,12 @@ class DebBuilder():
         if not os.path.isdir(debian_dir):
 
             map(read_file_data, ['changelog', 'control', 'rules'])
-            
+
             os.makedirs( os.path.join( debian_dir, self.project.name, self.project.install_prefix))
 
             for filename, data in templates.iteritems():
                 open(os.path.join(debian_dir, filename), 'w').write(data)
-        
+
         changelog_entry = """%(name)s (%(version)s) %(branch)s; urgency=low
 
   * Latest commits
@@ -99,20 +99,25 @@ class DebBuilder():
             changelog_data.update({'version': self.project.version('testing'), 'branch': 'testing'})
             self.build_info.version(self.project.version('testing'))
 
+        elif last_tag != None and last_tag.startswith('unstable'):
+            self.project.version('unstable', last_tag.split('_')[1])
+            changelog_data.update({'version': self.project.version('unstable'), 'branch': 'unstable'})
+            self.build_info.version(self.project.version('unstable'))
+
         else:
             """
-            otherwise it should change the distribution to unstable
+            otherwise it should change the distribution to experimental
             """
             if self.project.version(branch):
                 version_list = self.project.version(branch).split('.')
                 version_list[len(version_list) - 1] = str(int(version_list[len(version_list) - 1]) + 1)
                 self.project.version(branch, '.'.join(version_list))
 
-                changelog_data.update({'version': self.project.version(branch), 'branch': 'unstable'})
+                changelog_data.update({'version': self.project.version(branch), 'branch': 'experimental'})
             self.build_info.version(self.project.version(branch))
 
         open(os.path.join(self.builder.workdir, 'debian', 'changelog'), 'w').write(changelog_entry % changelog_data)
-        
+
         rvm_env = {}
         rvm_rc = os.path.join(self.builder.workdir, '.rvmrc')
         rvm_rc_example = rvm_rc +  ".example"
@@ -123,11 +128,11 @@ class DebBuilder():
         elif os.path.isfile(rvm_rc_example):
             has_rvm = True
             rvm_rc = rvm_rc_example
-        
+
         if has_rvm:
             rvmexec = open(rvm_rc).read()
             log.info("RVMRC: %s" % rvmexec)
-            
+
             # I need the output not to log on file
             rvm_cmd = subprocess.Popen('/usr/local/bin/rvm info %s' % rvmexec.split()[1],
                     shell=True, stdout=subprocess.PIPE)
@@ -154,9 +159,9 @@ class DebBuilder():
                 ['dpkg-buildpackage',  '-rfakeroot', '-tc', '-k%s' % BrickConfig().get('gpg', 'keyid')],
                 cwd=self.builder.workdir, env=rvm_env, stdout=self.stdout, stderr=self.stderr
         )
-        
+
         dpkg_cmd.wait()
-        
+
         clean_cmd = self.builder._exec(['dh', 'clean'], cwd=self.builder.workdir)
         clean_cmd.wait()
 
@@ -170,7 +175,7 @@ class DebBuilder():
         self.upload_files(distribution, files)
         upload_file = changes_file.replace('.changes', '.upload')
         open(upload_file, 'w').write("done")
-   
+
     def parse_changes(self, changes_file):
         content = open(changes_file).readlines()
         go = 0
@@ -186,7 +191,7 @@ class DebBuilder():
                 tmpname = line.split()
                 pos = len(tmpname)
                 tmpfiles.append(tmpname[pos-1])
-            else: 
+            else:
                 go = 0
         files = []
         for f in tmpfiles:
@@ -205,7 +210,7 @@ class DebBuilder():
             log.info("copying to local repo: %s/%s" % (repo_path, f))
             shutil.copy(f, os.path.join(repo_path, f))
 
-     
+
     def upload_files(self, distribution, files):
         repository_url, user, passwd = self.project.repository()
         if not repository_url:

@@ -48,12 +48,12 @@ class Builder:
         self.git = git.Git(self.project)
         self.workdir = self.git.workdir
         self.build_system = BrickConfig().get('build', 'system')
-        
+
         if self.build_system == 'rpm':
             self.package_builder = RpmBuilder(self)
         elif self.build_system == 'deb':
             self.package_builder = DebBuilder(self)
-        
+
         if self.build_system == 'rpm':
             self.mod_install_cmd = self.project.install_cmd.replace(
                 'BUILDROOT', '%{buildroot}'
@@ -62,10 +62,10 @@ class Builder:
             self.mod_install_cmd = self.project.install_cmd.replace(
                 'BUILDROOT', 'debian/tmp'
             )
-        
+
         if not os.path.isdir(self.workspace):
             os.makedirs(self.workspace)
-        
+
         if not os.path.isdir(os.path.join(self.workspace, 'log')):
             os.makedirs(os.path.join(self.workspace, 'log'))
 
@@ -90,7 +90,7 @@ class Builder:
                     build = 1
                 else:
                     build = 0
-                
+
                 """
                 force build for a specific branch only if a_branch is not None
                 """
@@ -120,7 +120,7 @@ class Builder:
                     if self.project.last_commit(branch) != last_commit:
                         self.project.last_commit(branch, last_commit)
                         build = 1
-                        
+
                     self.project.save()
 
                     self.oldworkdir = self.workdir
@@ -128,7 +128,7 @@ class Builder:
                         shutil.copytree(self.workdir, "%s-%s" % (self.workdir, branch))
                     self.workdir = "%s-%s" % (self.workdir, branch)
                     self.git.workdir = self.workdir
-                    self.git.pull() 
+                    self.git.pull()
                     self.git.checkout_branch(branch)
 
                     if build == 1:
@@ -139,11 +139,11 @@ class Builder:
 
                     self.workdir = self.oldworkdir
                     self.git.workdir = self.workdir
-                
+
                 self.git.checkout_branch('master')
-                
+
                 branch = 'master'
-                for tag_type in ('testing', 'stable'):
+                for tag_type in ('testing', 'stable', 'unstable'):
                     log.info('Last tag found: %s' % self.project.last_tag(tag_type))
                     if self.project.last_tag(tag_type) != self.git.last_tag(tag_type):
                         self.project.last_tag(tag_type, self.git.last_tag(tag_type))

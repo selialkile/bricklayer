@@ -22,6 +22,8 @@ h2. Usage
 
 Bricklayer has a restful interface that accepts the following parameters:
 
+For projects:
+
 <pre>
 POST /project:
   name="bricklayer" # The project name
@@ -45,7 +47,57 @@ GET /build/project_name
 
 GET /log/project_name/build_number
   Return the logfile for the given build number
+</pre>
 
+For groups:
+
+<pre>
+POST /group:
+  name="group" # The group name
+  repo_addr="repository_url" # The package repository URL
+  repo_user="user" # The package repository user
+  repo_passwd="p4ssw0rd" # The package repository password
+</pre>
+
+
+h2. Development
+
+To run bricklayer for development you need some tools.
+
+Firstly install redis-server
+
+<pre>
+apt-get -y install redis-server
+</pre>
+
+If you already have python installed, you can use pip for twisted:
+
+<pre>
+pip install twisted
+</pre>
+
+Use python path on the current directory, so the namespace will be acessible:
+
+<pre>
+export PYTHONPATH="."
+</pre>
+
+Point the bricklayer config file to the local one:
+
+<pre>
+export BRICKLAYERCONFIG=etc/bricklayer/bricklayer.ini
+</pre>
+
+Run twisted to get the bricklayer interface available at htt://localhost
+
+<pre>
+twistd -ny bricklayer/bricklayer.tac
+</pre>
+
+Run the bricklayer consumers
+
+<pre>
+python bricklayer/build_consumer.py
 </pre>
 
 h2. Building ruby applications ?
@@ -55,6 +107,3 @@ Bricklayer uses RVM to handle multiple ruby projects to be built in the same mac
 h2. What else ?
 
 It is important to note that bricklayer itself does nothing (beside watch your repository for tags and changes) but do what you told him to do, that means, if your project doesn't has enough automation to be able to pack itself by using scripts or make-like tasks the very best bricklayer can do is to provide templates that will copy everything in your project directory to a specific installation directory, still a package will be generated but no customizations will be made so BE AWARE and automate your project right way :D
-
-
-

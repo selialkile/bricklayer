@@ -32,7 +32,7 @@ class RpmBuilder():
         for line in f:
             new_file.write(match.sub('\n', line))
         new_file.close()
-        
+
     def build(self, branch, last_tag=None):
         templates_dir = os.path.join(self.builder.templates_dir, 'rpm')
         rpm_dir = os.path.join(self.builder.workdir, 'redhat')
@@ -56,6 +56,12 @@ class RpmBuilder():
             self.version = self.project.version('testing')
             self.distribution = 'testing'
 
+        elif last_tag != None and last_tag.startswith('unstable'):
+            self.project.version('unstable', last_tag.split('_')[1])
+            self.build_info.version(self.project.version('unstable'))
+            self.version = self.project.version('unstable')
+            self.distribution = 'unstable'
+
         else:
             """
             otherwise it should change the distribution to unstable
@@ -66,7 +72,7 @@ class RpmBuilder():
                 self.project.version(branch, '.'.join(version_list))
                 self.build_info.version(self.project.version(branch))
                 self.version = self.project.version(branch)
-                self.distribution = 'unstable'
+                self.distribution = 'experimental'
 
         dir_prefix = "%s-%s" % (self.project.name, self.version)
 
@@ -74,7 +80,7 @@ class RpmBuilder():
             if os.path.isdir(os.path.join(rpm_dir, dir)):
                 shutil.rmtree(os.path.join(rpm_dir, dir))
             os.makedirs(os.path.join(rpm_dir, dir))
-        
+
         build_dir = os.path.join(rpm_dir, 'TMP', self.project.name)
         os.makedirs(build_dir)
 
@@ -82,7 +88,7 @@ class RpmBuilder():
             shutil.rmtree(os.path.join(rpm_dir, dir_prefix))
         os.makedirs(os.path.join(rpm_dir, dir_prefix))
 
-        subprocess.call(["cp -rP `ls -a | grep -Ev '\.$|\.\.$|debian$|redhat$'` %s" % 
+        subprocess.call(["cp -rP `ls -a | grep -Ev '\.$|\.\.$|debian$|redhat$'` %s" %
             os.path.join(rpm_dir, dir_prefix)],
             cwd=self.builder.workdir,
             shell=True
@@ -133,7 +139,7 @@ class RpmBuilder():
         elif os.path.isfile(rvm_rc_example):
             has_rvm = True
             rvm_rc = rvm_rc_example
-        
+
         if has_rvm:
             rvmexec = open(rvm_rc).read()
             log.info("RVMRC: %s" % rvmexec)
@@ -167,7 +173,7 @@ class RpmBuilder():
             environment = rvm_env
             log.info(environment)
 
-        if os.path.isfile(os.path.join(self.builder.workdir, 'rpm', "%s.spec" % self.project.name)):            
+        if os.path.isfile(os.path.join(self.builder.workdir, 'rpm', "%s.spec" % self.project.name)):
             self.dos2unix(os.path.join(self.builder.workdir, 'rpm', "%s.spec" % self.project.name))
             template_fd = open(os.path.join(self.builder.workdir, 'rpm', "%s.spec" % self.project.name))
         else:
