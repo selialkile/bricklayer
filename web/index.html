@@ -2,18 +2,18 @@
 <html>
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-		<title>Bricklayer</title>
-		<link type="text/css" href="css/Aristo/jquery-ui-1.8.7.custom.css" rel="stylesheet" />	
+		<title>Bricklayer</title>	
         <link type="text/css" href="css/custom.css" rel="stylesheet"/>
-        <link type="text/css" href="css/bootstrap.min.css" rel="stylesheet"/>
-		<script type="text/javascript" src="js/jquery-1.5.1.min.js"></script>
-		<script type="text/javascript" src="js/jquery-ui-1.8.13.custom.min.js"></script>
-		<script type="text/javascript" src="js/jquery.mustache.js"></script>
-		<script type="text/javascript" src="js/jquery.editinplace.js"></script>
-		<script type="text/javascript" src="js/jquery.dotimeout.js"></script>
-		<script type="text/javascript" src="js/jquery.tablesorter.js"></script>
-		<script type="text/javascript" src="js/bricklayer.js"></script>
-		<script type="text/javascript" src="js/bootstrap-modal.js"></script>
+        <link type="text/css" href="css/bootstrap.css" rel="stylesheet"/>
+		<script type="text/javascript" src="js/jquery-1.7.1.min.js"></script>
+    <script type="text/javascript" src="js/jquery.mustache.js"></script>
+    <script type="text/javascript" src="js/jquery.editinplace.js"></script>
+    <script type="text/javascript" src="js/jquery.dotimeout.js"></script>
+    <script type="text/javascript" src="js/jquery.tablesorter.js"></script>
+    <script type="text/javascript" src="js/jquery.form.js"></script>
+    <script type="text/javascript" src="js/bricklayer.js"></script>
+    <script type="text/javascript" src="js/bootstrap.js"></script>
+    <script type="text/javascript" src="js/bootstrap-modal.js"></script>
 
         <style type="text/css">
           /* Override some defaults */
@@ -26,10 +26,11 @@
           .container > footer p {
             text-align: center; /* center align it with the container */
           }
-          .container {
-            width: 820px; /* downsize our container to make the content feel a bit tighter and more cohesive. NOTE: this removes two full columns from the grid, meaning you only go to 14 columns and not 16. */
-          }
 
+          .container {
+            width: 880px; /* downsize our container to make the content feel a bit tighter */
+          }
+          
           /* The white background content wrapper */
           .content {
             background-color: #fff;
@@ -66,7 +67,7 @@
             border-left: 1px solid #eee;
           }
 
-          .topbar .btn {
+          .navbar .btn {
             border: 0;
           }
 
@@ -74,8 +75,8 @@
 
 	</head>
 	<body>
-        <div class="topbar" data-scrollspy="scrollspy" >
-          <div class="topbar-inner">
+        <div class="navbar navbar-fixed-top" data-scrollspy="scrollspy" >
+          <div class="navbar-inner">
             <div class="container">
               <a class="brand" href="#">Bricklayer</a>
               <ul class="nav">
@@ -97,122 +98,116 @@
             <p>&copy; Rodrigo Sampaio Vaz 2011</p>
           </footer>
 
-            <div id="project-form" class="modal hide fade">
+            <div id="project-modal" class="modal hide fade">
                 <div class="modal-header">
-                  <a href="#" class="close">&times;</a>
                   <h2>Create Project - <small>build and install commands are optional</small></h2>
                 </div>
-                <div class="modal-body scroll">
-                    <form method="POST" action="/project">
+                <div class="modal-body">
+                    <form id="create-project-form" class="form-horizontal" method="POST" action="/project/">
                     <fieldset>
-                        <div class="clearfix">
-                            <label for="name">* Name:</label>
-                            <div class="input">
+                        <div class="control-group">
+                            <label class="control-label" for="name">* Name:</label>
+                            <div class="controls">
                                 <input type="text" name="name" id="name"/>
                             </div>
-                        </div><!-- /clearfix -->
-                        <div class="clearfix">
-                            <label for="git_url">* Git URL:</label>
-                            <div class="input">
+                        </div>
+                        <div class="control-group">
+                        <label class="control-label" for="git_url">* Git URL:</label>
+                            <div class="controls">
                                 <input type="text" name="git_url" id="git_url"/>
                             </div>
-                        </div><!-- /clearfix -->
-                        <div class="clearfix">
-                            <label for="branch">* Branch:</label>
-                            <div class="input">
+                        </div>
+                        <div class="control-group">
+                        <label class="control-label" for="branch">* Branch:</label>
+                            <div class="controls">
                                 <input type="text" name="branch" id="branch"/>
                             </div>
-                        </div><!-- /clearfix -->
-                        <div class="clearfix">
-                            <label for="version">* Version:</label>
-                            <div class="input">
+                        </div>
+                        <div class="control-group">
+                        <label class="control-label" for="version">* Version:</label>
+                            <div class="controls">
                             <input type="text" name="version" id="version"/>
                             </div>
-                        </div><!-- /clearfix -->
-                        <div class="clearfix">
-                            <label for="build_cmd">Build command:</label>
-                            <div class="input">
+                        </div>
+                        <div class="control-group">
+                        <label class="control-label" for="build_cmd">Build command:</label>
+                            <div class="controls">
                                 <input type="text" name="build_cmd" id="build_cmd" />
                             </div>
-                        </div><!-- /clearfix -->
-                        <div class="clearfix">
-                            <label for="install_cmd">Install command:</label>
-                            <div class="input">
+                        </div>
+                        <div class="control-group">
+                        <label class="control-label" for="install_cmd">Install command:</label>
+                            <div class="controls">
                                 <input type="text" name="install_cmd" id="install_cmd" />
                             </div>
-                        </div><!-- /clearfix -->
-                        <div class="clearfix">
-                            <label for="group_name">* Group name:</label>
-                            <div class="input">
+                        </div>
+                        <div class="control-group">
+                        <label class="control-label" for="group_name">* Group name:</label>
+                            <div class="controls">
                                 <select name="group_name" id="group_name" ></select>
                             </div>
-                        </div><!-- /clearfix -->
-                        <div class="actions">
-                            <input id="create-project-button" type="submit" class="btn primary" value="Save changes">&nbsp;
-                            <button id="cancel-project-button" type="reset" class="btn">Cancel</button>
                         </div>
-
                     </fieldset>
-                    </form>
+                  </form>    
                 </div>
                 <div class="modal-footer">
+                            <input id="create-project-button" type="submit" class="btn primary" value="Save changes">&nbsp;
+                            <button id="cancel-project-button" type="reset" class="btn">Cancel</button>
                 </div>
-
+                
             </div>
 
-            <div id="group-form" class="modal hide fade">
+            <div id="group-modal" class="modal hide fade">
                 <div class="modal-header">
-                  <a href="#" class="close">&times;</a>
                   <h2>Create Group - <small>repository information</small></h2>
                 </div>
-                <div class="modal-body scroll">
-                    <form method="POST" action="/group">
+                <div class="modal-body">
+                    <form id="create-group-form" class="form-horizontal" method="POST" action="/group/">
                     <fieldset>
-                        <div class="clearfix">
-                            <label for="name">* Name:</label>
-                            <div class="input">
+                        <div class="control-group">
+                            <label class="control-label" for="name">* Name:</label>
+                            <div class="controls">
                                 <input type="text" name="name" id="name"/>
                             </div>
                         </div><!-- /clearfix -->
-                        <div class="clearfix">
-                            <label for="repo_addr">* Repository host:</label>
-                            <div class="input">
+                        <div class="control-group">
+                            <label class="control-label" for="repo_addr">* Repository host:</label>
+                            <div class="controls">
                                 <input type="text" name="repo_addr" id="repo_addr"/>
                             </div>
                         </div><!-- /clearfix -->
-                        <div class="clearfix">
-                            <label for="repo_user">* Repository user:</label>
-                            <div class="input">
+                        <div class="control-group">
+                            <label class="control-label" for="repo_user">* Repository user:</label>
+                            <div class="controls">
                                 <input type="text" name="repo_user" id="repo_user"/>
                             </div>
                         </div><!-- /clearfix -->
-                        <div class="clearfix">
-                            <label for="repo_pass">* Repository password:</label>
-                            <div class="input">
-                            <input type="text" name="repo_pass" id="repo_pass"/>
+                        <div class="control-group">
+                            <label class="control-label" for="repo_passwd">* Repository password:</label>
+                            <div class="controls">
+                            <input type="text" name="repo_passwd" id="repo_passwd"/>
                             </div>
                         </div><!-- /clearfix -->
 
-                        <div class="actions">
-                            <input id="create-group-button" type="submit" class="btn primary" value="Save changes">&nbsp;
-                            <button id="cancel-group-button" type="reset" class="btn">Cancel</button>
-                        </div>
-                    </fieldset>
+                      </fieldset>
                     </form>
                 </div>
                 <div class="modal-footer">
+                  <input id="create-group-button" type="submit" class="btn primary" value="Save changes">&nbsp;
+                            <button id="cancel-group-button" type="reset" class="btn">Cancel</button>
                 </div>
             </div>
 
           <div id="build-log-view" class="modal hide fade">
             <div class="modal-header">
-              <a href="#" class="close">&times;</a>
               <h3>Log</h3>
             </div>
-            <div class="modal-body scroll">
+            <div class="modal-body">
+            <pre id="log-viewer" style="overflow:scroll; width: auto; height: 300px"></pre>
             </div>
             <div class="modal-footer">
-              <a id="refresh-button" href="#" class="btn primary">Refresh</a>
+              <input type="checkbox" id="auto-refresh" checked>Auto refresh</input>
+              <a id="close-button" href="#" class="btn primary">Close</a>
             </div>
           </div>
 
