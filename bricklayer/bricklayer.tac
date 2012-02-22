@@ -16,6 +16,7 @@ from twisted.python import log
 
 from builder import Builder, build_project
 from projects import Projects
+from git import Git
 from config import BrickConfig
 from rest import restApp
 from dreque import Dreque, DrequeWorker
@@ -31,24 +32,51 @@ class BricklayerFactory(protocol.ServerFactory):
 
     def __init__(self):
         self.sched_projects()
-
-    def build_project(self, project_name, force=False):
-        builder = Builder(project_name)
-        builder.build_project(force=force)
     
-    def send_job(self, project_name):
-        log.msg('sched project: %s' % project_name)
+    def send_job(self, project_name, branch, release, version):
+        log.msg('sched build: %s [%s:%s]' % (project_name, release, version))
         brickconfig = BrickConfig()
         queue = Dreque(brickconfig.get('redis', 'redis-server'))
-        queue.enqueue('build', 'builder.build_project', {'project': project_name, 'branch': None, 'force': False})
+        queue.enqueue('build', 'builder.build_project', {
+            'project': project_name, 
+            'branch': branch, 
+            'release': release, 
+            'version': version,
+            })
 
     def sched_builder(self):
         for project in Projects.get_all():
-            d = threads.deferToThread(self.send_job, project.name)
+            if project.is_building():
+                log.msg("project %s still building, skip" % project.name)
+                continue
+            branch = "master"
+            git = Git(project)
+            if os.path.isdir(git.workdir):
+                git.reset()
+                git.checkout_branch(branch)
+                git.pull()
+            else:
+                git.clone(branch)
+                git.checkout_remote_branch(branch)
+                git.checkout_branch(branch)
+
+            for release in ('stable', 'testing', 'unstable'):
+                if project.last_tag(release) != git.last_tag(release):
+                    _, version = git.last_tag(release).split('_')
+                    log.msg("new %s tag, building version: %s" % (release, version))
+                    d = threads.deferToThread(self.send_job, project.name, branch, release, version)
+
+            for branch in project.branches():
+                git.checkout_remote_branch(branch)
+                git.checkout_branch(branch)
+                git.pull()
+                if project.last_commit(branch) != git.last_commit(branch):
+                    d = threads.deferToThread(self.send_job, project.name, branch, 'experimental', None)
+
 
     def sched_projects(self):
         sched_task = task.LoopingCall(self.sched_builder)
-        sched_task.start(30.0)
+        sched_task.start(10.0)
 
 brickconfig = BrickConfig()
 unix_socket = brickconfig.get('server', 'unix')

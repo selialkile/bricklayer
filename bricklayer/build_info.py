@@ -35,6 +35,13 @@ class BuildInfo:
         return self.redis_cli.get('build:%s:%s:version' % (self.project, self.build_id))
 
     @transaction
+    def release(self, release=''):
+        if release:
+            return self.redis_cli.set('build:%s:%s:release' % (self.project, self.build_id), release) 
+        return self.redis_cli.get('build:%s:%s:release' % (self.project, self.build_id))
+
+
+    @transaction
     def log(self, logfile=''):
         if logfile:
             return self.redis_cli.set('build:%s:%s:log' % (self.project, self.build_id), logfile) 

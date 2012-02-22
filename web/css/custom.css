@@ -2,8 +2,6 @@ body {
     padding-top: 40px;
 }
 
-
-
 #content p {
     margin: 0;
     padding: 0;
@@ -11,14 +9,12 @@ body {
     font-size: 12px;
 }
 
-
 a.name {
   color: #111;
   font-size: 16px;
   font-weight: bold;
   text-decoration: none;
 }
-
 
 tr.project td {
     overflow: hidden;
@@ -29,7 +25,7 @@ tr.project td {
     font-weight: bold;
     float: right;
     list-style: none;
-    margin-top: -40px;
+    margin-top: -60px;
 }
 
 .build-log a {

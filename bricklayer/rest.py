@@ -46,7 +46,11 @@ class Project(cyclone.web.RequestHandler):
                 project.group_name = self.get_argument('group_name')
                 project.save()
                 log.msg('Project created:', project.name)
-                reactor.callInThread(queue.enqueue, 'build', 'builder.build_project', {'project': project.name, 'branch': self.get_argument('branch'), 'force': True})
+                reactor.callInThread(queue.enqueue, 'build', 'builder.build_project', {
+                            'project': project.name, 
+                            'branch': self.get_argument('branch'), 
+                            'release': 'experimental'
+                    })
                 self.write(cyclone.escape.json_encode({'status': 'ok'}))
             except Exception, e:
                 log.err()
@@ -66,7 +70,11 @@ class Project(cyclone.web.RequestHandler):
                 setattr(project, aname, arg[0])
         try:
             project.save()
-            reactor.callInThread(queue.enqueue, 'build', 'builder.build_project', {'project': project.name, 'branch': branch, 'force': True})
+            reactor.callInThread(queue.enqueue, 'build', 'builder.build_project', {
+                'project': project.name, 
+                'branch': branch, 
+                'release': 'experimental',
+            })
         except Exception, e:
             log.err(e)
             self.finish(cyclone.escape.json_encode({'status': 'fail'}))
@@ -130,7 +138,7 @@ class Branch(cyclone.web.RequestHandler):
         else:
             project.add_branch(branch)
             project.version(branch, '0.1')
-            reactor.callInThread(queue.enqueue, 'build', 'builder.build_project', {'project': project.name, 'branch': self.get_argument('branch'), 'force': True})
+            reactor.callInThread(queue.enqueue, 'build', 'builder.build_project', {'project': project.name, 'branch': self.get_argument('branch'), 'release': 'experimental'})
             self.write(cyclone.escape.json_encode({'status': 'ok'}))
 
     def delete(self, project_name):
@@ -143,7 +151,9 @@ class Build(cyclone.web.RequestHandler):
     def post(self, project_name):
         project = Projects(project_name)
         branch = self.get_argument('branch')
-        reactor.callInThread(queue.enqueue, 'build', 'builder.build_project', {'project': project.name, 'branch': self.get_argument('branch'), 'force': True})
+        release = self.get_argument('release')
+        version = self.get_argument('version')
+        reactor.callInThread(queue.enqueue, 'build', 'builder.build_project', {'project': project.name, 'branch': branch, 'release': release, 'version': version})
         self.write(cyclone.escape.json_encode({'status': 'build of branch %s scheduled' % branch}))
 
     def get(self, project_name):
@@ -152,7 +162,7 @@ class Build(cyclone.web.RequestHandler):
         builds = []
         for bid in build_ids[-10:]:
             build = BuildInfo(project, bid)
-            builds.append({'build': int(bid), 'log': os.path.basename(build.log()), 'version': build.version(), 'date': build.time()})
+            builds.append({'build': int(bid), 'log': os.path.basename(build.log()), 'version': build.version(), 'release': build.release(), 'date': build.time()})
         self.write(cyclone.escape.json_encode(builds))
 
 class Log(cyclone.web.RequestHandler):

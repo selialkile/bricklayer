@@ -25,9 +25,13 @@ class Git(object):
         git_cmd.wait()
         if branch:
             self.checkout_branch(branch)
+
+    def reset(self):
+        git_cmd = self._exec_git(['git', 'reset', 'HEAD'], cwd=self.workdir)
+        git_cmd.wait()
     
     def pull(self):
-        git_cmd = self._exec_git(['git', 'pull', '--force'], cwd=self.workdir)
+        git_cmd = self._exec_git(['git', 'pull'], cwd=self.workdir)
         git_cmd.wait()
     
     def checkout_tag(self, tag='master'):

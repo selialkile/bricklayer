@@ -12,7 +12,7 @@ sys.path.append(os.path.dirname(__file__))
 import pystache
 import git
 
-from twisted.internet import threads, reactor
+from twisted.internet import threads, reactor, defer
 from config import BrickConfig
 from projects import Projects
 
@@ -29,16 +29,11 @@ queue = Dreque(redis_server)
 logging.basicConfig(filename=log_file, level=logging.DEBUG)
 log = logging.getLogger('builder')
 
+@defer.inlineCallbacks
 def build_project(kargs):
-    project, branch, force = kargs['project'], kargs['branch'], kargs['force']
-    logging.basicConfig(filename=log_file, level=logging.DEBUG)
-    log = logging.getLogger('builder-worker')
-    log.debug("> %s %s %s" % (project, branch, force))
-
-    builder = Builder(project)
-    builder.build_project(force, branch)
-    defered = threads.deferToThread(builder.build_project, force, branch)
-
+    builder = Builder(kargs['project'])
+    kargs.pop('project')
+    yield builder.build_project(**kargs)
 
 class Builder:
     def __init__(self, project):
@@ -75,83 +70,29 @@ class Builder:
     def _exec(self, cmd, *args, **kwargs):
         return subprocess.Popen(cmd, *args, **kwargs)
 
-    def enqueue_build(self, a_branch):
-        if self.project.is_building():
-            reactor.callInThread(queue.enqueue, 'build', 'builder.build_project', {'project': self.project.name, 'branch': a_branch, 'force': True})
-            log.debug("project: %s building waiting 30 sec", self.project.name)
-
-    def build_project(self, force=False, a_branch=None):
-        if self.project.is_building():
-            self.enqueue_build(a_branch)
-        else:
+    def build_project(self, branch=None, release=None, version=None):
+        if not self.project.is_building():
             self.project.start_building()
             try:
-                if force:
-                    build = 1
-                else:
-                    build = 0
+                if release == 'experimental':
+                    self.project.last_commit(branch, self.git.last_commit(branch))
 
-                """
-                force build for a specific branch only if a_branch is not None
-                """
-                if a_branch:
-                    branches = [a_branch]
-                else:
-                    branches = self.project.branches()
+                self.oldworkdir = self.workdir
+                if not os.path.isdir("%s-%s" % (self.workdir, release)):
+                    shutil.copytree(self.workdir, "%s-%s" % (self.workdir, release))
+                self.workdir = "%s-%s" % (self.workdir, release)
+                os.chdir(self.workdir)
+                self.git.workdir = self.workdir
+                self.git.pull()
+                self.git.checkout_branch(branch)
 
-                for branch in branches:
-                    log.debug("Checking project: %s" % self.project.name)
-                    try:
-                        if not os.path.isdir(self.git.workdir):
-                            self.git.clone(branch)
-                            self.git.checkout_remote_branch(branch)
-                        else:
-                            self.git.checkout_tag(tag=".")
-                            self.git.pull()
-                    except Exception, e:
-                        log.exception('Could not clone or update repository')
-                        raise
-
-                    if os.path.isdir(self.workdir):
-                        os.chdir(self.workdir)
-
-                    last_commit = self.git.last_commit(branch)
-
-                    if self.project.last_commit(branch) != last_commit:
-                        self.project.last_commit(branch, last_commit)
-                        build = 1
-
-                    self.project.save()
-
-                    self.oldworkdir = self.workdir
-                    if not os.path.isdir("%s-%s" % (self.workdir, branch)):
-                        shutil.copytree(self.workdir, "%s-%s" % (self.workdir, branch))
-                    self.workdir = "%s-%s" % (self.workdir, branch)
-                    self.git.workdir = self.workdir
-                    self.git.pull()
-                    self.git.checkout_branch(branch)
-
-                    if build == 1:
-                        log.info('Generating packages for %s on %s'  % (self.project.name, self.workdir))
-                        self.package_builder.build(branch)
-                        self.package_builder.upload(branch)
-                        log.info("build complete for %s" % self.project.name)
-
-                    self.workdir = self.oldworkdir
-                    self.git.workdir = self.workdir
-
+                self.project.last_tag(release, self.git.last_tag(release))
+                self.git.checkout_tag(self.project.last_tag(release))
+                self.package_builder.build(branch, self.project.last_tag(release))
+                self.package_builder.upload(release)
                 self.git.checkout_branch('master')
-
-                branch = 'master'
-                for tag_type in ('testing', 'stable', 'unstable'):
-                    log.info('Last tag found: %s' % self.project.last_tag(tag_type))
-                    if self.project.last_tag(tag_type) != self.git.last_tag(tag_type):
-                        self.project.last_tag(tag_type, self.git.last_tag(tag_type))
-                        if self.project.last_tag(tag_type):
-                            self.git.checkout_tag(self.project.last_tag(tag_type))
-                            self.package_builder.build(branch, self.project.last_tag(tag_type))
-                            self.package_builder.upload(tag_type)
-                        self.git.checkout_branch(branch)
+                
+                self.workdir = self.oldworkdir
 
             except Exception, e:
                 log.exception("build failed: %s" % repr(e))

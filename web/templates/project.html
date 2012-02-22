@@ -5,14 +5,14 @@
 <div class="container">
         {{#items}}
         <section>
-            <div class="page-header project">
+        <div id="project-overview-{{ name }}" class="page-header project">
                 <h2><a class="name" id="show_{{ name }}" href="#project-detail">{{ name }}</a> <br><small> {{ git_url }}</small></h2>
                 
 
                 <ul class="tags">
-                    {{#last_tag_testing}}<li><span class="label">{{ last_tag_testing }}</span></li>{{/last_tag_testing}}
-                    {{#last_tag_stable}}<li><span class="label">{{ last_tag_stable }}</span></li>{{/last_tag_stable}}
-                    {{#last_tag_unstable}}<li><span class="label">{{ last_tag_unstable }}</span></li>{{/last_tag_unstable}}
+                    {{#last_tag_testing}}<li><span id="testing" class="label label-warning">{{ last_tag_testing }}</span></li>{{/last_tag_testing}}
+                    {{#last_tag_stable}}<li><span id="stable" class="label label-success">{{ last_tag_stable }}</span></li>{{/last_tag_stable}}
+                    {{#last_tag_unstable}}<li><span id="unstable" class="label label-info">{{ last_tag_unstable }}</span></li>{{/last_tag_unstable}}
                 </ul>
 
                 <div class="details" id="project-{{ name }}-details"></div>

@@ -6,7 +6,9 @@ $(function(){
         var builds = $.parseJSON($.ajax({url: "/build/" + name, dataType: "json", async: false}).responseText);
         
         $("#" + section + "-" + name + "-details").html($.mustache(template, { builds: builds, details:details }));
-
+        $("#" + section + "-overview-" + name).find("#testing").html(details['last_tag_testing']);
+        $("#" + section + "-overview-" + name).find("#unstable").html(details['last_tag_unstable']);
+        $("#" + section + "-overview-" + name).find("#stable").html(details['last_tag_stable']);
         $("table[class*=tablesorter]").tablesorter();
 
         $("a[id='build-log-show']").click(function () {

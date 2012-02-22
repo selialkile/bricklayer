@@ -93,16 +93,19 @@ class DebBuilder():
             self.project.version('stable', last_tag.split('_')[1])
             changelog_data.update({'version': self.project.version('stable'), 'branch': 'stable'})
             self.build_info.version(self.project.version('stable'))
+            self.build_info.release('stable')
 
         elif last_tag != None and last_tag.startswith('testing'):
             self.project.version('testing', last_tag.split('_')[1])
             changelog_data.update({'version': self.project.version('testing'), 'branch': 'testing'})
             self.build_info.version(self.project.version('testing'))
+            self.build_info.release('testing')
 
         elif last_tag != None and last_tag.startswith('unstable'):
             self.project.version('unstable', last_tag.split('_')[1])
             changelog_data.update({'version': self.project.version('unstable'), 'branch': 'unstable'})
             self.build_info.version(self.project.version('unstable'))
+            self.build_info.release('unstable')
 
         else:
             """
@@ -115,6 +118,7 @@ class DebBuilder():
 
                 changelog_data.update({'version': self.project.version(branch), 'branch': 'experimental'})
             self.build_info.version(self.project.version(branch))
+            self.build_info.release('experimental:%s' % branch)
 
         open(os.path.join(self.builder.workdir, 'debian', 'changelog'), 'w').write(changelog_entry % changelog_data)
 
