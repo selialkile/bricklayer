@@ -71,6 +71,7 @@ class BricklayerFactory(protocol.ServerFactory):
                 git.checkout_branch(branch)
                 git.pull()
                 if project.last_commit(branch) != git.last_commit(branch):
+                    project.last_commit(branch, git.last_commit(branch))
                     d = threads.deferToThread(self.send_job, project.name, branch, 'experimental', None)
 
 

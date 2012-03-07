@@ -74,22 +74,25 @@ class Builder:
         if not self.project.is_building():
             self.project.start_building()
             try:
-                if release == 'experimental':
-                    self.project.last_commit(branch, self.git.last_commit(branch))
-
                 self.oldworkdir = self.workdir
                 if not os.path.isdir("%s-%s" % (self.workdir, release)):
                     shutil.copytree(self.workdir, "%s-%s" % (self.workdir, release))
                 self.workdir = "%s-%s" % (self.workdir, release)
+
                 os.chdir(self.workdir)
                 self.git.workdir = self.workdir
                 self.git.pull()
                 self.git.checkout_branch(branch)
 
-                self.project.last_tag(release, self.git.last_tag(release))
-                self.git.checkout_tag(self.project.last_tag(release))
-                self.package_builder.build(branch, self.project.last_tag(release))
-                self.package_builder.upload(release)
+                if release == 'experimental':
+                    self.git.checkout_branch(branch)
+                    self.package_builder.build(branch, release)
+                    self.package_builder.upload(branch)
+                else:
+                    self.project.last_tag(release, self.git.last_tag(release))
+                    self.git.checkout_tag(self.project.last_tag(release))
+                    self.package_builder.build(branch, self.project.last_tag(release))
+                    self.package_builder.upload(release)
                 self.git.checkout_branch('master')
                 
                 self.workdir = self.oldworkdir

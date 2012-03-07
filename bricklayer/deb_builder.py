@@ -111,6 +111,7 @@ class DebBuilder():
             """
             otherwise it should change the distribution to experimental
             """
+
             if self.project.version(branch):
                 version_list = self.project.version(branch).split('.')
                 version_list[len(version_list) - 1] = str(int(version_list[len(version_list) - 1]) + 1)
@@ -204,16 +205,65 @@ class DebBuilder():
         return distribution, files
 
     def local_repo(self, distribution, files):
-        repo_path = os.path.join(BrickConfig().get("local_repo", "dir"), self.project.group_name, distribution)
-        if not os.path.isdir(repo_path):
-            os.makedirs(repo_path)
+        archive_conf_data = """Dir {
+  ArchiveDir "%s/%s";
+};
+
+BinDirectory "dists/unstable" {
+  Packages "dists/unstable/main/binary-amd64/Packages";
+  SrcPackages "dists/unstable/main/source/Sources";
+};
+
+BinDirectory "dists/stable" {
+  Packages "dists/stable/main/binary-amd64/Packages";
+  SrcPackages "dists/stable/main/source/Sources";
+};
+
+BinDirectory "dists/testing" {
+  Packages "dists/testing/main/binary-amd64/Packages";
+  SrcPackages "dists/testing/main/source/Sources";
+};
+
+BinDirectory "dists/experimental" {
+  Packages "dists/experimental/main/binary-amd64/Packages";
+  SrcPackages "dists/experimental/main/source/Sources";
+};"""
+        repo_bin_path = os.path.join(BrickConfig().get("local_repo", "dir"), 
+                self.project.group_name, 'dists/%s/main/binary-amd64/' % distribution)
+        repo_src_path = os.path.join(BrickConfig().get("local_repo", "dir"), 
+                self.project.group_name, 'dists/%s/main/source/' % distribution)
+
+        archive_conf_file = os.path.join(
+                BrickConfig().get("local_repo", "dir"), 
+                self.project.group_name, 
+                'archive.conf')
+
+        if not os.path.isdir(repo_bin_path) or not os.path.isdir(repo_src_path):
+            os.makedirs(repo_bin_path)
+            os.makedirs(repo_src_path)
+
+            if not os.path.isfile(archive_conf_file):
+                open(archive_conf_file, 'w').write(
+                        archive_conf_data % (
+                            BrickConfig().get("local_repo", "dir"), 
+                            self.project.group_name
+                        ))
+
 
         os.chdir(self.builder.workspace)
 
         for f in files:
-            log.info("copying to local repo: %s/%s" % (repo_path, f))
-            shutil.copy(f, os.path.join(repo_path, f))
+            if f.endswith('.dsc') or f.endswith('.tar.gz'):
+                print repo_src_path, f
+                shutil.copy(f, os.path.join(repo_src_path, f))
+            elif f.endswith('.deb'):
+                print repo_bin_path, f
+                shutil.copy(f, os.path.join(repo_bin_path, f))
 
+        repo_base_path = os.path.join(BrickConfig().get('local_repo', 'dir'), self.project.group_name)
+        refresh_cmd = subprocess.Popen(str("apt-ftparchive generate %s" % archive_conf_file).split(), cwd=repo_base_path)
+        refresh_cmd.wait()
+        
 
     def upload_files(self, distribution, files):
         repository_url, user, passwd = self.project.repository()

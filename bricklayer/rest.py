@@ -225,7 +225,7 @@ restApp = cyclone.web.Application([
     (r'/group/?(.*)', Group),
     (r'/log/(.*)/+(.*)', Log),
     (r'/static/(.*)', cyclone.web.StaticFileHandler, {'path': brickconfig.get('static', 'dir')}),
-    (r'/repo/(.*)', cyclone.web.StaticFileHandler, {'path': brickconfig.get('workspace', 'dir')}),
+    (r'/repo/(.*)', cyclone.web.StaticFileHandler, {'path': brickconfig.get('local_repo', 'dir')}),
     (r'/', Main),
 ])
 
