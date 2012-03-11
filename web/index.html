@@ -1,19 +1,20 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-		<title>Bricklayer</title>	
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+        <title>Bricklayer</title>
         <link type="text/css" href="css/custom.css" rel="stylesheet"/>
         <link type="text/css" href="css/bootstrap.css" rel="stylesheet"/>
-		<script type="text/javascript" src="js/jquery-1.7.1.min.js"></script>
-    <script type="text/javascript" src="js/jquery.mustache.js"></script>
-    <script type="text/javascript" src="js/jquery.editinplace.js"></script>
-    <script type="text/javascript" src="js/jquery.dotimeout.js"></script>
-    <script type="text/javascript" src="js/jquery.tablesorter.js"></script>
-    <script type="text/javascript" src="js/jquery.form.js"></script>
-    <script type="text/javascript" src="js/bricklayer.js"></script>
-    <script type="text/javascript" src="js/bootstrap.js"></script>
-    <script type="text/javascript" src="js/bootstrap-modal.js"></script>
+        <script type="text/javascript" src="js/jquery-1.7.1.min.js"></script>
+        <script type="text/javascript" src="js/jquery.mustache.js"></script>
+        <script type="text/javascript" src="js/jquery.editinplace.js"></script>
+        <script type="text/javascript" src="js/jquery.dotimeout.js"></script>
+        <script type="text/javascript" src="js/jquery.tablesorter.js"></script>
+        <script type="text/javascript" src="js/jquery.form.js"></script>
+        <script type="text/javascript" src="js/bricklayer.js"></script>
+        <script type="text/javascript" src="js/bootstrap.js"></script>
+        <script type="text/javascript" src="js/bootstrap-modal.js"></script>
+        <script type="text/javascript" src="js/bootstrap-typeahead.js"></script>
 
         <style type="text/css">
           /* Override some defaults */
@@ -30,7 +31,7 @@
           .container {
             width: 880px; /* downsize our container to make the content feel a bit tighter */
           }
-          
+
           /* The white background content wrapper */
           .content {
             background-color: #fff;
@@ -73,8 +74,8 @@
 
         </style>
 
-	</head>
-	<body>
+    </head>
+    <body>
         <div class="navbar navbar-fixed-top" data-scrollspy="scrollspy" >
           <div class="navbar-inner">
             <div class="container">
@@ -84,6 +85,10 @@
                 <li id="group"><a href="#group">Groups</a></li>
                 <li id="package"><a href="#package">Packages</a></li>
               </ul>
+
+            <form class="navbar-search pull-left" action="">
+                <input type="text" class="search-query span2" placeholder="Search">
+            </form>
             </div>
           </div>
         </div>
@@ -154,7 +159,7 @@
                             <input id="create-project-button" type="submit" class="btn primary" value="Save changes">&nbsp;
                             <button id="cancel-project-button" type="reset" class="btn">Cancel</button>
                 </div>
-                
+
             </div>
 
             <div id="group-modal" class="modal hide fade">
@@ -204,15 +209,15 @@
             </div>
             <div class="modal-body">
             <pre id="log-viewer" style="overflow:scroll; width: auto; height: 300px"></pre>
-            </div>
-            <div class="modal-footer">
-              <input type="checkbox" id="auto-refresh" checked>Auto refresh</input>
-              <a id="close-button" href="#" class="btn primary">Close</a>
-            </div>
-          </div>
+        </div>
+        <div class="modal-footer">
+            <input type="checkbox" id="auto-refresh" checked>Auto refresh</input>
+            <a id="close-button" href="#" class="btn primary">Close</a>
+        </div>
+    </div>
 
 
-        </div> <!-- /container -->
+</div> <!-- /container -->
 
 
     </body>

@@ -21,14 +21,9 @@ from config import BrickConfig
 from rest import restApp
 from dreque import Dreque, DrequeWorker
 
-class BricklayerProtocol(basic.LineReceiver):
-    def lineReceived(self, line):
-        pass
-    def connectionMade(self):
-        pass
 
 class BricklayerFactory(protocol.ServerFactory):
-    protocol = BricklayerProtocol
+    protocol = basic.LineReceiver()
 
     def __init__(self):
         self.sched_projects()
@@ -57,15 +52,17 @@ class BricklayerFactory(protocol.ServerFactory):
                 git.pull()
             else:
                 git.clone(branch)
-                git.checkout_remote_branch(branch)
-                git.checkout_branch(branch)
+
+            for remote_branch in git.branches(remote=True):
+                print remote_branch
+                git.checkout_remote_branch(remote_branch.replace('origin/', ''))
 
             for release in ('stable', 'testing', 'unstable'):
                 if project.last_tag(release) != git.last_tag(release):
                     _, version = git.last_tag(release).split('_')
                     log.msg("new %s tag, building version: %s" % (release, version))
                     d = threads.deferToThread(self.send_job, project.name, branch, release, version)
-
+            
             for branch in project.branches():
                 git.checkout_remote_branch(branch)
                 git.checkout_branch(branch)

@@ -5,6 +5,7 @@ import sys
 sys.path.append(os.path.dirname(__file__))
 from projects import Projects
 from groups import Groups
+from git import Git
 from builder import Builder
 from build_info import BuildInfo
 from config import BrickConfig
@@ -127,7 +128,8 @@ class Project(cyclone.web.RequestHandler):
 class Branch(cyclone.web.RequestHandler):
     def get(self, project_name):
         project = Projects(project_name)
-        branches = project.branches()
+        git = Git(project)
+        branches = git.branches(remote=True)
         self.write(cyclone.escape.json_encode({'branches': branches}))
 
     def post(self, project_name):
@@ -150,10 +152,16 @@ class Branch(cyclone.web.RequestHandler):
 class Build(cyclone.web.RequestHandler):
     def post(self, project_name):
         project = Projects(project_name)
-        branch = self.get_argument('branch')
-        release = self.get_argument('release')
+        release = self.get_argument('tag')
         version = self.get_argument('version')
-        reactor.callInThread(queue.enqueue, 'build', 'builder.build_project', {'project': project.name, 'branch': branch, 'release': release, 'version': version})
+        reactor.callInThread(queue.enqueue, 
+                'build', 
+                'builder.build_project', 
+                {'project': project.name, 
+                    'branch': branch, 
+                    'release': tag, 
+                    'version': version}
+                )
         self.write(cyclone.escape.json_encode({'status': 'build of branch %s scheduled' % branch}))
 
     def get(self, project_name):

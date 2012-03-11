@@ -50,9 +50,14 @@ class Git(object):
             )
         git_cmd.wait()
 
-    def branches(self):
-        branches_dir = os.path.join(self.workdir, '.git', 'refs', 'heads')
-        return os.listdir(branches_dir)
+    def branches(self, remote=False):
+        if remote:
+            git_cmd = self._exec_git("git branch -r".split(), stdout=subprocess.PIPE, cwd=self.workdir) 
+        else:
+            git_cmd = self._exec_git("git branch".split(), stdout=subprocess.PIPE, cwd=self.workdir) 
+        branch_list = git_cmd.stdout.readlines()
+        
+        return map(lambda x: x.strip(), branch_list)
 
     def last_commit(self, branch='master'):
         log.info(">>> %s" % branch)
