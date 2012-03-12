@@ -1,12 +1,13 @@
 import redis
 from model_base import ModelBase, transaction
 from groups import Groups
+from git import Git
 
 class Projects(ModelBase):
     
     namespace = 'project'
 
-    def __init__(self, name='', git_url='', install_cmd='', build_cmd='', version='', release='', group_name=''):
+    def __init__(self, name='', git_url='', install_cmd='', build_cmd='', version='', release='', group_name='', experimental=1):
         self.name = name
         self.git_url = git_url
         self.install_cmd = install_cmd
@@ -15,6 +16,7 @@ class Projects(ModelBase):
         if version:
             self.version(version=version)
         self.release = release
+        self.experimental = experimental
         self.email = 'bricklayer@locaweb.com.br'
         self.username = 'Bricklayer Builder'
         self.install_prefix = ''
@@ -22,7 +24,7 @@ class Projects(ModelBase):
         self.redis_cli = None
 
     def __dir__(self):
-        return ['name', 'git_url', 'install_cmd', 'build_cmd', 'email', 'username', 'release', 'group_name']
+        return ['name', 'git_url', 'install_cmd', 'build_cmd', 'email', 'username', 'release', 'group_name', 'experimental']
    
     @transaction
     def start_building(self):
@@ -98,4 +100,8 @@ class Projects(ModelBase):
             key = key.replace('%s:' % self.namespace, '')
             projects.append(Projects(key)) 
         return projects
-
+    
+    def clear_branches(self):
+        git = Git(self)
+        for b in self.branches():
+            shutil.rmtree("%s-%s" % (git.workdir, b))

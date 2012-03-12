@@ -14,26 +14,7 @@
                 </small>
             </h2>
 
-            <div class="btn-group">
-                <a class="btn dropdown-toggle" data-toggle="dropdown" href="#"><i class="icon-cog"></i> Actions</a>
-                <ul id="menu1" class="dropdown-menu">
-                    <li><a href="#"><i class="icon-refresh"></i> Clean local files</a></li>
-                    <li class="divider"></li>
-                    <li><a href="#"><i class="icon-trash"></i> Delete project</a></li>
-                </ul>
-            </div>
-
-
             <ul class="tags">
-                {{#last_tag_testing}}
-                <li>
-                <i class="icon-tag"></i>
-                <span id="testing" class="label label-warning">
-                    {{ last_tag_testing }}
-                </span>
-                </li>
-                {{/last_tag_testing}}
-
                 {{#last_tag_stable}}
                 <li>
                 <i class="icon-tag"></i>
@@ -42,6 +23,15 @@
                 </span>
                 </li>
                 {{/last_tag_stable}}
+
+                {{#last_tag_testing}}
+                <li>
+                <i class="icon-tag"></i>
+                <span id="testing" class="label label-warning">
+                    {{ last_tag_testing }}
+                </span>
+                </li>
+                {{/last_tag_testing}}
 
                 {{#last_tag_unstable}}
                 <li>

@@ -15,6 +15,7 @@
         <script type="text/javascript" src="js/bootstrap.js"></script>
         <script type="text/javascript" src="js/bootstrap-modal.js"></script>
         <script type="text/javascript" src="js/bootstrap-typeahead.js"></script>
+        <script type="text/javascript" src="js/bootstrap-scrollspy.js"></script>
 
         <style type="text/css">
           /* Override some defaults */
@@ -75,7 +76,7 @@
         </style>
 
     </head>
-    <body>
+    <body data-spy="scroll">
         <div class="navbar navbar-fixed-top" data-scrollspy="scrollspy" >
           <div class="navbar-inner">
             <div class="container">
@@ -83,11 +84,11 @@
               <ul class="nav">
                 <li id="project"><a href="#overview">Projects</a></li>
                 <li id="group"><a href="#group">Groups</a></li>
-                <li id="package"><a href="#package">Packages</a></li>
+                <li id="package"><a href="http://pkg.bricklayer.int">Packages</a></li>
               </ul>
 
-            <form class="navbar-search pull-left" action="">
-                <input type="text" class="search-query span2" placeholder="Search">
+            <form id="search-form" class="navbar-search pull-left" action="">
+                <input id="search-projects" autocomplete="off" type="text" class="search-query span2" placeholder="Search" data-provide="typeahead">
             </form>
             </div>
           </div>
@@ -95,13 +96,14 @@
 
         <div class="container">
 
-          <div class="content" id="content">
+            <div id="alert-area-global"></div>  
+            <div class="content" id="content">
 
-          </div>
+            </div>
 
-          <footer>
-            <p>&copy; Rodrigo Sampaio Vaz 2011</p>
-          </footer>
+            <footer>
+                <p>&copy; Rodrigo Sampaio Vaz 2011</p>
+            </footer>
 
             <div id="project-modal" class="modal hide fade">
                 <div class="modal-header">
@@ -203,18 +205,32 @@
                 </div>
             </div>
 
-          <div id="build-log-view" class="modal hide fade">
+        <div id="build-log-view" class="modal hide fade">
             <div class="modal-header">
               <h3>Log</h3>
             </div>
             <div class="modal-body">
-            <pre id="log-viewer" style="overflow:scroll; width: auto; height: 300px"></pre>
+                <pre id="log-viewer" style="overflow:scroll; width: auto; height: 300px"></pre>
+            </div>
+            <div class="modal-footer">
+                <input type="checkbox" id="auto-refresh" checked>Auto refresh</input>
+                <a id="close-button" href="#" class="btn primary">Close</a>
+            </div>
         </div>
-        <div class="modal-footer">
-            <input type="checkbox" id="auto-refresh" checked>Auto refresh</input>
-            <a id="close-button" href="#" class="btn primary">Close</a>
+
+        <div id="delete-project" class="modal hide fade">
+            <div class="modal-header">
+                <h3>Delete project <small></small></h3>
+            </div>
+            <div class="modal-body">
+                <b> Are you sure you want to delete this project? <b>
+            </div>
+            <div class="modal-footer">
+                <a id="delete-close-button" href="#" class="btn primary">Close</a>
+                <a id="delete-confirm-button" href="#" class="btn btn-danger">Delete</a>
+            </div>
         </div>
-    </div>
+
 
 
 </div> <!-- /container -->

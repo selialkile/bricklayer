@@ -71,15 +71,10 @@ class Project(cyclone.web.RequestHandler):
                 setattr(project, aname, arg[0])
         try:
             project.save()
-            reactor.callInThread(queue.enqueue, 'build', 'builder.build_project', {
-                'project': project.name, 
-                'branch': branch, 
-                'release': 'experimental',
-            })
         except Exception, e:
             log.err(e)
             self.finish(cyclone.escape.json_encode({'status': 'fail'}))
-        self.finish(cyclone.escape.json_encode({'status': 'build scheduled'}))
+        self.finish(cyclone.escape.json_encode({'status': 'modified'}))
 
     def get(self, name='', branch='master'):
         try:
@@ -87,6 +82,7 @@ class Project(cyclone.web.RequestHandler):
                     project = Projects(name)
                     reply = {'name': project.name,
                             'branch': project.branches(),
+                            'experimental': bool(int(project.experimental)),
                             'group_name': project.group_name,
                             'git_url': project.git_url,
                             'version': project.version(),
@@ -103,6 +99,7 @@ class Project(cyclone.web.RequestHandler):
                     reply.append(
                             {'name': project.name,
                             'branch': project.branches(),
+                            'experimental': bool(int(project.experimental)),
                             'group_name': project.group_name,
                             'git_url': project.git_url,
                             'version': project.version(),
@@ -120,9 +117,14 @@ class Project(cyclone.web.RequestHandler):
     def delete(self, name):
         try:
             project = Projects(name)
+            git = Git(project)
+            git.clear_repo()
+            project.clear_branches()
             project.delete()
+            self.write(cyclone.escape.json_encode({'status': 'project deleted'}))
         except Exception, e:
             log.err(e)
+            self.write(cyclone.escape.json_encode({'status': 'failed to delete %s' % str(e)}))
 
 
 class Branch(cyclone.web.RequestHandler):
@@ -158,8 +160,8 @@ class Build(cyclone.web.RequestHandler):
                 'build', 
                 'builder.build_project', 
                 {'project': project.name, 
-                    'branch': branch, 
-                    'release': tag, 
+                    'branch': 'master', 
+                    'release': release, 
                     'version': version}
                 )
         self.write(cyclone.escape.json_encode({'status': 'build of branch %s scheduled' % branch}))
@@ -184,6 +186,17 @@ class Check(cyclone.web.RequestHandler):
         project = Projects(project_name)
         builder = Builder(project_name)
         builder.build_project()
+
+class Clear(cyclone.web.RequestHandler):
+    def post(self, project_name):
+        try:
+            project = Projects(project_name)
+            git = Git(project)
+            git.clear_repo()
+            self.write(cyclone.escape.json_encode({'status': 'ok'}))
+        except Exception, e:
+            self.write(cyclone.escape.json_encode({'status': 'fail', 'error': str(e)}))
+
 
 class Group(cyclone.web.RequestHandler):
     def post(self, *args):
@@ -228,6 +241,7 @@ restApp = cyclone.web.Application([
     (r'/project', Project),
     (r'/project/?(.*)', Project),
     (r'/branch/(.*)', Branch),
+    (r'/clear/(.*)', Clear),
     (r'/build/(.*)', Build),
     (r'/group', Group),
     (r'/group/?(.*)', Group),

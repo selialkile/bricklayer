@@ -59,6 +59,9 @@ class Git(object):
         
         return map(lambda x: x.strip(), branch_list)
 
+    def clear_repo(self):
+        shutil.rmtree(self.workdir)
+
     def last_commit(self, branch='master'):
         log.info(">>> %s" % branch)
         return open(os.path.join(self.workdir, '.git', 'refs', 'heads', branch)).read()

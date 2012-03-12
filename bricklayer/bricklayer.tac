@@ -63,13 +63,14 @@ class BricklayerFactory(protocol.ServerFactory):
                     log.msg("new %s tag, building version: %s" % (release, version))
                     d = threads.deferToThread(self.send_job, project.name, branch, release, version)
             
-            for branch in project.branches():
-                git.checkout_remote_branch(branch)
-                git.checkout_branch(branch)
-                git.pull()
-                if project.last_commit(branch) != git.last_commit(branch):
-                    project.last_commit(branch, git.last_commit(branch))
-                    d = threads.deferToThread(self.send_job, project.name, branch, 'experimental', None)
+            if int(project.experimental) == 1:
+                for branch in project.branches():
+                    git.checkout_remote_branch(branch)
+                    git.checkout_branch(branch)
+                    git.pull()
+                    if project.last_commit(branch) != git.last_commit(branch):
+                        project.last_commit(branch, git.last_commit(branch))
+                        d = threads.deferToThread(self.send_job, project.name, branch, 'experimental', None)
 
 
     def sched_projects(self):

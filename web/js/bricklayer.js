@@ -1,11 +1,12 @@
 $(function(){
+    
+    var filter = "";
 
     function refresh_details(section, name) {
         var template = $.ajax({url:"/static/templates/" + section + "_details.html", async: false}).responseText;
         var details = $.parseJSON($.ajax({url: "/project/" + name, dataType: "json", async: false}).responseText);
         var builds = $.parseJSON($.ajax({url: "/build/" + name, dataType: "json", async: false}).responseText);
-        
-        $("#" + section + "-" + name + "-details").html($.mustache(template, { builds: builds, details:details }));
+        $("#" + section + "-" + name + "-details").html($.mustache(template, { builds: builds, details: details }));
         $("#" + section + "-overview-" + name).find("#testing").html(details['last_tag_testing']);
         $("#" + section + "-overview-" + name).find("#unstable").html(details['last_tag_unstable']);
         $("#" + section + "-overview-" + name).find("#stable").html(details['last_tag_stable']);
@@ -21,6 +22,60 @@ $(function(){
                     }
                     return true;
                 });
+        });
+
+        $("#action-clear-" + name).click(function(e) {
+            console.log("clear");
+            $.post("/clear/" + name, '', function(data) {
+                    $("#alert-area-" + name).html('<div class="alert alert-success"><a class="close" data-dismiss="alert">x</a><b>Clear status</b> : ' + data + '</div>');
+                    $("#alert-area-" + name).alert();
+                }
+            );
+        });
+
+        $("#action-delete-" + name).click(function(e) {
+            show_confirm_delete(name);
+        });
+
+        $("#action-enable-experimental-" + name).click(function(e) {
+            $.ajax({type: "PUT", url: "/project/" + name, data: 'experimental=1', success: function(data) {
+                    $("#alert-area-global").html('<div class="alert alert-success fade in"><a class="close" data-dismiss="alert">x</a><b>Experimental enabled</b> : ' + data + '</div>');
+                    $("#alert-area-global").alert();
+                    refresh_details(section, name);
+                }
+            });
+        });
+
+        $("#action-disable-experimental-" + name).click(function(e) {
+            $.ajax({type: "PUT", url: "/project/" + name, data: 'experimental=0', success: function(data) {
+                    $("#alert-area-global").html('<div class="alert alert-success fade in"><a class="close" data-dismiss="alert">x</a><b>Experimental disabled</b> : ' + data + '</div>');
+                    $("#alert-area-global").alert();
+                    refresh_details(section, name);
+                }
+            });
+        });
+        
+
+    }
+
+    function show_confirm_delete(name) {
+        $("#delete-project").find("small").html(name);
+
+        if ($("#delete-project").css("display") == "none") 
+            $("#delete-project").modal("show");
+        
+        $("#delete-close-button").click(function() {
+            $("#delete-project").modal("hide");
+        });
+
+        $("#delete-confirm-button").click(function() {
+            $.ajax({
+                type: "DELETE",
+                url: "/project/" + name,
+                success: function () {
+                    $("#delete-project").modal("hide");
+                    visit("project");
+                }});
         });
     }
 
@@ -65,6 +120,10 @@ $(function(){
             dataType: "json",
             success: function(data) {
                 var template = $.ajax({url:"/static/templates/" + section + ".html", async: false}).responseText;
+                if (filter != "") {
+                    filtered_data = data.map(function(x) {if (x['name'] == filter) return x;});
+                    data = filtered_data;
+                }
                 $("#content").html($.mustache(template, { items : data.sort(function(a, b) { 
                     if (a['name'] < b['name']) {
                         return -1;
@@ -165,6 +224,23 @@ $(function(){
     $('#create-project-form').ajaxForm(function() { 
         
     });
+    
+    $('#search-form').ajaxForm();
+    $('#search-form').submit(function () {
+        filter = $(this).find("#search-projects").val();
+        visit("project");
+        show_details("project", filter);
+        return false;
+    });
+
+    var project_list = $.parseJSON(
+            $.ajax({
+                url: "/project", 
+                dataType: "json", 
+                async: false}).responseText);
+
+    var project_names = project_list.map(function(p) {return p['name'];});
+    $('#search-projects').typeahead({'source': project_names});
 
     visit("project");
 });
