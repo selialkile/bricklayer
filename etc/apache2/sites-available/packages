@@ -1,0 +1,37 @@
+<VirtualHost *:80>
+	ServerName pkg.bricklayer.int
+	DocumentRoot /var/lib/bricklayer/repo
+
+	# Define where is the theme and icons directory
+	Alias /icons/ /var/lib/bricklayer/repo/include/icons/
+	Alias /include/ /var/lib/bricklayer/repo/include/
+
+	<Directory "/var/lib/bricklayer/repo/">
+	    AllowOverride All
+	    Order allow,deny
+	    Allow from all
+
+	# Tell Apache to add theme support to autoindex
+	<IfModule mod_autoindex.c>
+	    Options Indexes FollowSymLinks
+	    IndexOptions +FancyIndexing 
+	    IndexOptions +VersionSort 
+	    IndexOptions +HTMLTable 
+	    IndexOptions +FoldersFirst 
+	    IndexOptions +IconsAreLinks 
+	    IndexOptions +IgnoreCase 
+	    IndexOptions +SuppressDescription 
+	    IndexOptions +SuppressHTMLPreamble 
+	    IndexOptions +XHTML 
+	    IndexOptions +IconWidth=16 
+	    IndexOptions +IconHeight=16 
+	    IndexOptions +NameWidth=*
+	    IndexOrderDefault Descending Name
+	    HeaderName /include/header.html
+	    ReadmeName /include/footer.html
+	</ifModule>
+
+	</Directory>
+
+
+</VirtualHost>

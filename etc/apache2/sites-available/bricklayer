@@ -1,0 +1,7 @@
+<VirtualHost *:80>
+	ServerName bricklayer.int
+	<Location  />
+	    ProxyPass http://localhost:8080/
+	</Location>
+
+</VirtualHost>
