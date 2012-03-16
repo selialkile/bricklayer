@@ -59,9 +59,12 @@ class BricklayerFactory(protocol.ServerFactory):
 
             for release in ('stable', 'testing', 'unstable'):
                 if project.last_tag(release) != git.last_tag(release):
-                    _, version = git.last_tag(release).split('_')
-                    log.msg("new %s tag, building version: %s" % (release, version))
-                    d = threads.deferToThread(self.send_job, project.name, branch, release, version)
+                    try:
+                        _, version = git.last_tag(release).split('_')
+                        log.msg("new %s tag, building version: %s" % (release, version))
+                        d = threads.deferToThread(self.send_job, project.name, branch, release, version)
+                    except Exception, e:
+                        log.msg("tag not recognized")
             
             if int(project.experimental) == 1:
                 for branch in project.branches():
@@ -79,16 +82,13 @@ class BricklayerFactory(protocol.ServerFactory):
 
 brickconfig = BrickConfig()
 unix_socket = brickconfig.get('server', 'unix')
-network_port = brickconfig.get('server', 'port')
 
 bricklayer = service.MultiService()
 
 factory = BricklayerFactory()
 brickService = internet.UNIXServer(unix_socket, factory)
-restService = internet.TCPServer(int(network_port), restApp)
 
 brickService.setServiceParent(bricklayer)
-restService.setServiceParent(bricklayer)
 
 application = service.Application("Bricklayer")
 bricklayer.setServiceParent(application)

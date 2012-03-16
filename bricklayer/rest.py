@@ -14,6 +14,7 @@ import cyclone.web
 import cyclone.escape
 from twisted.internet import reactor
 from twisted.python import log
+from twisted.application import service, internet
 from dreque import Dreque
 
 
@@ -251,3 +252,7 @@ restApp = cyclone.web.Application([
     (r'/', Main),
 ])
 
+if __name__ == "__main__":
+    application = service.Application("bricklayer_rest")
+    server = internet.TCPServer(brickconfig.get('server', 'http_port'), webapp, interface="127.0.0.1")
+    server.setServiceParent(application)
