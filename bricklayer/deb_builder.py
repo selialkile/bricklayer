@@ -5,7 +5,6 @@ import time
 import re
 import glob
 import stat
-import logging as log
 import subprocess
 import ftplib
 import pystache
@@ -14,6 +13,7 @@ from urlparse import urlparse
 from projects import Projects
 from config import BrickConfig
 from build_info import BuildInfo
+from twisted.python import log
 
 from git import Git
 
@@ -136,7 +136,7 @@ class DebBuilder():
 
         if has_rvm:
             rvmexec = open(rvm_rc).read()
-            log.info("RVMRC: %s" % rvmexec)
+            log.msg("RVMRC: %s" % rvmexec)
 
             # I need the output not to log on file
             rvm_cmd = subprocess.Popen('/usr/local/bin/rvm info %s' % rvmexec.split()[1],
@@ -175,6 +175,7 @@ class DebBuilder():
 
     def upload(self, branch):
         changes_file = glob.glob('%s/%s_%s_*.changes' % (self.builder.workspace, self.project.name, self.project.version(branch)))[0]
+        log.msg(changes_file)
         distribution, files = self.parse_changes(changes_file)
         self.local_repo(distribution, files)
         self.upload_files(distribution, files)
@@ -274,11 +275,11 @@ BinDirectory "dists/experimental" {
         try:
             ftp.cwd(distribution)
             for f in files:
-                log.info("\t%s: " % f)
+                log.msg("\t%s: " % f)
                 ftp.storbinary("STOR %s" % f, open(f, 'rb'))
-                log.info("done.")
+                log.msg("done.")
         except Exception, e:
-            log.info(repr(e))
+            log.msg(repr(e))
         ftp.quit()
 
     def promote_to(self, version, release):

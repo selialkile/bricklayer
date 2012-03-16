@@ -252,7 +252,6 @@ restApp = cyclone.web.Application([
     (r'/', Main),
 ])
 
-if __name__ == "__main__":
-    application = service.Application("bricklayer_rest")
-    server = internet.TCPServer(brickconfig.get('server', 'http_port'), webapp, interface="127.0.0.1")
-    server.setServiceParent(application)
+application = service.Application("bricklayer_rest")
+server = internet.TCPServer(int(brickconfig.get('server', 'port')), restApp, interface="127.0.0.1")
+server.setServiceParent(application)

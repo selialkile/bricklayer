@@ -54,7 +54,6 @@ class BricklayerFactory(protocol.ServerFactory):
                 git.clone(branch)
 
             for remote_branch in git.branches(remote=True):
-                print remote_branch
                 git.checkout_remote_branch(remote_branch.replace('origin/', ''))
 
             for release in ('stable', 'testing', 'unstable'):
@@ -64,7 +63,7 @@ class BricklayerFactory(protocol.ServerFactory):
                         log.msg("new %s tag, building version: %s" % (release, version))
                         d = threads.deferToThread(self.send_job, project.name, branch, release, version)
                     except Exception, e:
-                        log.msg("tag not recognized")
+                        log.msg("tag not parsed: %s:%s" % (project.name, git.last_tag(release)))
             
             if int(project.experimental) == 1:
                 for branch in project.branches():

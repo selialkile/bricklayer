@@ -35,14 +35,18 @@ test -r ${TACFILE} || exit 0
 case "$1" in
   start)
 	echo -n "Starting bricklayer"
-	start-stop-daemon --start --quiet --exec ${DAEMON} -- -y ${TACFILE} --rundir=${RUNDIR} --pidfile=${PIDFILE} --logfile=${LOGFILE}
-    start-stop-daemon --start --quiet --exec ${CONSUMER} --pidfile ${CONSUMER_PIDFILE} -b 
+	${DAEMON} -y ${TACFILE} --pidfile=${PIDFILE} -l /var/log/bricklayer.log 2>&1 > /dev/null &
+	PYTHONPATH=/usr/share/pyshared/bricklayer/utils twistd -y /usr/share/pyshared/bricklayer/rest.py -l /var/log/bricklayer-rest.log
+    	start-stop-daemon --start --quiet --exec ${CONSUMER} --pidfile ${CONSUMER_PIDFILE}.1 -b 
+    	start-stop-daemon --start --quiet --exec ${CONSUMER} --pidfile ${CONSUMER_PIDFILE}.2 -b 
+    	start-stop-daemon --start --quiet --exec ${CONSUMER} --pidfile ${CONSUMER_PIDFILE}.3 -b 
 	echo "."	
 	;;
   stop)
 	echo -n "Stopping bricklayer"
-	start-stop-daemon --stop --quiet --pidfile ${PIDFILE}
-	start-stop-daemon --stop --quiet --pidfile ${CONSUMER_PIDFILE}
+	ps aux | grep twistd | grep -v grep | awk '{print $2}' | xargs kill -9
+	ps aux | grep build_consumer | grep -v grep | awk '{print $2}' | xargs kill -9
+	rm /var/run/bricklayer.sock
 	echo "."
 	;;
   restart)
@@ -60,3 +64,4 @@ case "$1" in
 esac
 
 exit 0
+

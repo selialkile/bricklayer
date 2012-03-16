@@ -17,7 +17,7 @@ class Git(object):
     def _exec_git(self, cmd=[], cwd='.', stdout=None):
         if stdout is None:
             stdout = open('/dev/null', 'w')
-        return subprocess.Popen(cmd, cwd=cwd, stdout=stdout)
+        return subprocess.Popen(cmd, cwd=cwd, stdout=stdout, stderr=stdout)
 
     def clone(self, branch):
         log.info("Git clone %s" % self.project.git_url)
