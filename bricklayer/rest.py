@@ -165,7 +165,7 @@ class Build(cyclone.web.RequestHandler):
                     'release': release, 
                     'version': version}
                 )
-        self.write(cyclone.escape.json_encode({'status': 'build of branch %s scheduled' % branch}))
+        self.write(cyclone.escape.json_encode({'status': 'build of branch %s scheduled' % release}))
 
     def get(self, project_name):
         project = project_name
