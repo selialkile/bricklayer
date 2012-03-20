@@ -81,7 +81,6 @@ class Builder:
 
                 os.chdir(self.workdir)
                 self.git.workdir = self.workdir
-                self.git.pull()
                 self.git.checkout_branch(branch)
 
                 if release == 'experimental':
@@ -94,7 +93,9 @@ class Builder:
                     self.package_builder.build(branch, self.project.last_tag(release))
                     self.package_builder.upload(release)
                 self.git.checkout_branch('master')
-                
+               
+                shutil.rmtree(self.workdir)
+
                 self.workdir = self.oldworkdir
 
             except Exception, e:
