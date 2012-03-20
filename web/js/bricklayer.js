@@ -25,7 +25,6 @@ $(function(){
         });
 
         $("#action-clear-" + name).click(function(e) {
-            console.log("clear");
             $.post("/clear/" + name, '', function(data) {
                     $("#alert-area-" + name).html('<div class="alert alert-success"><a class="close" data-dismiss="alert">x</a><b>Clear status</b> : ' + data + '</div>');
                     $("#alert-area-" + name).alert();
@@ -121,7 +120,12 @@ $(function(){
             success: function(data) {
                 var template = $.ajax({url:"/static/templates/" + section + ".html", async: false}).responseText;
                 if (filter != "") {
-                    filtered_data = data.map(function(x) {if (x['name'] == filter) return x;});
+                    filtered_data = []
+                    for (i=0; i<data.leght; i++) {
+                        if (data[i].name == filter) {
+                            filtered_data.push(data[i])
+                        }
+                    }   
                     data = filtered_data;
                 }
                 $("#content").html($.mustache(template, { items : data.sort(function(a, b) { 
