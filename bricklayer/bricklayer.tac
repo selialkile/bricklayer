@@ -41,39 +41,45 @@ class BricklayerFactory(protocol.ServerFactory):
 
     def sched_builder(self):
         for project in Projects.get_all():
-            if project.is_building():
-                log.msg("project %s still building, skip" % project.name)
-                continue
-            branch = "master"
-            git = Git(project)
-            if os.path.isdir(git.workdir):
-                git.reset()
-                git.checkout_branch(branch)
-                git.pull()
-            else:
-                git.clone(branch)
-
-            for remote_branch in git.branches(remote=True):
-                git.checkout_remote_branch(remote_branch.replace('origin/', ''))
-
-            for release in ('stable', 'testing', 'unstable'):
-                if project.last_tag(release) != git.last_tag(release):
-                    try:
-                        _, version = git.last_tag(release).split('_')
-                        log.msg("new %s tag, building version: %s" % (release, version))
-                        d = threads.deferToThread(self.send_job, project.name, branch, release, version)
-                    except Exception, e:
-                        log.msg("tag not parsed: %s:%s" % (project.name, git.last_tag(release)))
-            
-            if int(project.experimental) == 1:
-                for branch in project.branches():
-                    git.checkout_remote_branch(branch)
+            try:
+                if project.is_building():
+                    log.msg("project %s still building, skip" % project.name)
+                    continue
+                branch = "master"
+                git = Git(project)
+                if os.path.isdir(git.workdir):
+                    git.reset()
                     git.checkout_branch(branch)
                     git.pull()
-                    if project.last_commit(branch) != git.last_commit(branch):
-                        project.last_commit(branch, git.last_commit(branch))
-                        d = threads.deferToThread(self.send_job, project.name, branch, 'experimental', None)
+                else:
+                    git.clone(branch)
 
+                for remote_branch in git.branches(remote=True):
+                    git.checkout_remote_branch(remote_branch.replace('origin/', ''))
+
+                for release in ('stable', 'testing', 'unstable'):
+                    if project.last_tag(release) != git.last_tag(release):
+                        try:
+                            _, version = git.last_tag(release).split('_')
+                            log.msg("new %s tag, building version: %s" % (release, version))
+                            d = threads.deferToThread(self.send_job, project.name, branch, release, version)
+                        except Exception, e:
+                            log.msg("tag not parsed: %s:%s" % (project.name, git.last_tag(release)))
+                
+                if int(project.experimental) == 1:
+                    for branch in project.branches():
+                        git.checkout_remote_branch(branch)
+                        git.checkout_branch(branch)
+                        git.pull()
+                        if project.last_commit(branch) != git.last_commit(branch):
+                            project.last_commit(branch, git.last_commit(branch))
+                            d = threads.deferToThread(self.send_job, project.name, branch, 'experimental', None)
+
+                        git.checkout_branch("master")
+
+            except Exception, e:
+                log.msg("Something went really wrong: %s" % repr(e))
+                
 
     def sched_projects(self):
         sched_task = task.LoopingCall(self.sched_builder)
