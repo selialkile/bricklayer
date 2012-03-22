@@ -119,6 +119,15 @@ $(function(){
             dataType: "json",
             success: function(data) {
                 var template = $.ajax({url:"/static/templates/" + section + ".html", async: false}).responseText;
+                if (filter != "") {
+                    filtered_data = [];
+                    for (i=0; i<data.length; i++) {
+                        if (data[i].name == filter) {
+                            filtered_data.push(data[i]);
+                        }
+                    }   
+                    data = filtered_data;
+                }
                 $("#content").html($.mustache(template, { items : data.sort(function(a, b) { 
                     if (a['name'] < b['name']) {
                         return -1;
@@ -150,15 +159,6 @@ $(function(){
                         break;
 
                     case 'project':
-                        if (filter != "") {
-                            filtered_data = [];
-                            for (i=0; i<data.length; i++) {
-                                if (data[i].name == filter) {
-                                    filtered_data.push(data[i]);
-                                }
-                            }   
-                            data = filtered_data;
-                        }
                         var groups_select = $.parseJSON($.ajax({url: "/group", dataType: "json", async: false}).responseText);
                         $("select#group_name").html("");
                         for(i=0, len=groups_select.length; i < len; i++) {
