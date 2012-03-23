@@ -1,4 +1,6 @@
 import sys
+reload(sys)
+sys.setdefaultencoding('utf8')
 import os
 import subprocess
 import time
@@ -97,6 +99,6 @@ class Builder:
             except Exception, e:
                 log.exception("build failed: %s" % repr(e))
             finally:
-                shutil.rmtree(self.workdir)
                 self.project.stop_building()
+                shutil.rmtree(self.workdir)
 
