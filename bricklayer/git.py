@@ -63,7 +63,6 @@ class Git(object):
         shutil.rmtree(self.workdir)
 
     def last_commit(self, branch='master'):
-        log.info(">>> %s" % branch)
         return open(os.path.join(self.workdir, '.git', 'refs', 'heads', branch)).read()
 
     def last_tag(self, tag_type):
