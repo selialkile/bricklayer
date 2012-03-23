@@ -41,13 +41,7 @@ class Builder:
         self.project = Projects(project)
         self.templates_dir = BrickConfig().get('workspace', 'template_dir')
         self.git = git.Git(self.project)
-        self.workdir = self.git.workdir
         self.build_system = BrickConfig().get('build', 'system')
-
-        if self.build_system == 'rpm':
-            self.package_builder = RpmBuilder(self)
-        elif self.build_system == 'deb':
-            self.package_builder = DebBuilder(self)
 
         if self.build_system == 'rpm':
             self.mod_install_cmd = self.project.install_cmd.replace(
@@ -71,13 +65,17 @@ class Builder:
         return subprocess.Popen(cmd, *args, **kwargs)
 
     def build_project(self, branch=None, release=None, version=None):
+
         if not self.project.is_building():
             self.project.start_building()
             try:
-                self.oldworkdir = self.workdir
-                if not os.path.isdir("%s-%s" % (self.workdir, release)):
-                    shutil.copytree(self.workdir, "%s-%s" % (self.workdir, release))
-                self.workdir = "%s-%s" % (self.workdir, release)
+                self.workdir = "%s-%s" % (self.git.workdir, release)
+                shutil.copytree(self.git.workdir, self.workdir)
+
+                if self.build_system == 'rpm':
+                    self.package_builder = RpmBuilder(self)
+                elif self.build_system == 'deb':
+                    self.package_builder = DebBuilder(self)
 
                 os.chdir(self.workdir)
                 self.git.workdir = self.workdir
@@ -96,10 +94,9 @@ class Builder:
                
                 shutil.rmtree(self.workdir)
 
-                self.workdir = self.oldworkdir
-
             except Exception, e:
                 log.exception("build failed: %s" % repr(e))
             finally:
+                shutil.rmtree(self.workdir)
                 self.project.stop_building()
 

@@ -8,19 +8,20 @@ import stat
 import subprocess
 import ftplib
 import pystache
+import logging
 from urlparse import urlparse
 
 from projects import Projects
 from config import BrickConfig
 from build_info import BuildInfo
-from twisted.python import log
 
-from git import Git
+log = logging.getLogger('builder')
 
 class DebBuilder():
     def __init__(self, builder):
         self.builder = builder
         self.project = self.builder.project
+        log.info("Debian builder initialized: %s" % self.builder.workdir)
 
     def build(self, branch, last_tag=None):
         templates = {}
@@ -136,7 +137,7 @@ class DebBuilder():
 
         if has_rvm:
             rvmexec = open(rvm_rc).read()
-            log.msg("RVMRC: %s" % rvmexec)
+            log.info("RVMRC: %s" % rvmexec)
 
             # I need the output not to log on file
             rvm_cmd = subprocess.Popen('/usr/local/bin/rvm info %s' % rvmexec.split()[1],
@@ -175,7 +176,7 @@ class DebBuilder():
 
     def upload(self, branch):
         changes_file = glob.glob('%s/%s_%s_*.changes' % (self.builder.workspace, self.project.name, self.project.version(branch)))[0]
-        log.msg(changes_file)
+        log.info(changes_file)
         distribution, files = self.parse_changes(changes_file)
         self.local_repo(distribution, files)
         self.upload_files(distribution, files)
@@ -275,11 +276,11 @@ BinDirectory "dists/experimental" {
         try:
             ftp.cwd(distribution)
             for f in files:
-                log.msg("\t%s: " % f)
+                log.info("\t%s: " % f)
                 ftp.storbinary("STOR %s" % f, open(f, 'rb'))
-                log.msg("done.")
+                log.info("done.")
         except Exception, e:
-            log.msg(repr(e))
+            log.info(repr(e))
         ftp.quit()
 
     def promote_to(self, version, release):

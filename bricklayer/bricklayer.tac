@@ -48,7 +48,6 @@ class BricklayerFactory(protocol.ServerFactory):
                 branch = "master"
                 git = Git(project)
                 if os.path.isdir(git.workdir):
-                    git.reset()
                     git.checkout_branch(branch)
                     git.pull()
                 else:

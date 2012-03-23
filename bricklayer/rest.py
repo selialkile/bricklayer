@@ -62,20 +62,18 @@ class Project(cyclone.web.RequestHandler):
             self.write(cyclone.escape.json_encode({'status':  "Project already exists"}))
 
     def put(self, name):
-        branch = 'master'
         project = Projects(name)
-
-        for aname, arg in self.request.arguments.iteritems():
-            if aname in ('branch'):
-                branch = arg
-            else:
-                setattr(project, aname, arg[0])
         try:
-            project.save()
+            for aname, arg in self.request.arguments.iteritems():
+                if aname in ('branch'):
+                    branch = arg
+                else:
+                    setattr(project, aname, arg[0])
+                project.save()
         except Exception, e:
             log.err(e)
             self.finish(cyclone.escape.json_encode({'status': 'fail'}))
-        self.finish(cyclone.escape.json_encode({'status': 'modified'}))
+        self.finish(cyclone.escape.json_encode({'status': 'modified %s' % self.request}))
 
     def get(self, name='', branch='master'):
         try:
