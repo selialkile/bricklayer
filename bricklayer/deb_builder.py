@@ -263,8 +263,6 @@ BinDirectory "dists/experimental" {
                 shutil.copy(f, os.path.join(repo_bin_path, f))
 
         repo_base_path = os.path.join(BrickConfig().get('local_repo', 'dir'), self.project.group_name)
-        refresh_cmd = subprocess.Popen(str("apt-ftparchive generate %s" % archive_conf_file).split(), cwd=repo_base_path)
-        refresh_cmd.wait()
         
 
     def upload_files(self, distribution, files):
