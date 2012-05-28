@@ -119,7 +119,7 @@ $(function(){
             dataType: "json",
             success: function(data) {
                 var template = $.ajax({url:"/static/templates/" + section + ".html", async: false}).responseText;
-                if (filter != "" and section == "project") {
+                if (filter != "" && section == "project") {
                     filtered_data = [];
                     for (i=0; i<data.length; i++) {
                         if (data[i].name == filter) {
