@@ -1,3 +1,4 @@
+import shutil
 import redis
 from model_base import ModelBase, transaction
 from groups import Groups
@@ -104,4 +105,7 @@ class Projects(ModelBase):
     def clear_branches(self):
         git = Git(self)
         for b in self.branches():
-            shutil.rmtree("%s-%s" % (git.workdir, b))
+            try:
+                shutil.rmtree("%s-%s" % (git.workdir, b))
+            except Exception, e:
+                pass # ignore if files does not exist

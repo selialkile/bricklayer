@@ -40,6 +40,10 @@ class ModelBase:
 
     @transaction
     def delete(self):
-        project_keys = self.redis_cli.keys("*%s*" % self.name)
+        project_keys = self.redis_cli.keys("*:%s" % self.name)
+        for key in project_keys:
+            self.redis_cli.delete(key)
+
+        project_keys = self.redis_cli.keys("*:%s:*" % self.name)
         for key in project_keys:
             self.redis_cli.delete(key)

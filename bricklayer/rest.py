@@ -1,6 +1,7 @@
 import os
 import signal
 import sys
+import json
 
 sys.path.append(os.path.dirname(__file__))
 from projects import Projects
@@ -69,11 +70,17 @@ class Project(cyclone.web.RequestHandler):
                     branch = arg
                 else:
                     setattr(project, aname, arg[0])
-                project.save()
+            
+            json_data = json.loads(self.request.body)
+            if len(json_data.keys()) > 0:
+                for k, v in json_data.iteritems():
+                    setattr(project, k, v)
+            
+            project.save()
         except Exception, e:
             log.err(e)
             self.finish(cyclone.escape.json_encode({'status': 'fail'}))
-        self.finish(cyclone.escape.json_encode({'status': 'modified %s' % self.request}))
+        self.finish(cyclone.escape.json_encode({'status': 'modified %s' % name}))
 
     def get(self, name='', branch='master'):
         try:
@@ -81,7 +88,7 @@ class Project(cyclone.web.RequestHandler):
                     project = Projects(name)
                     reply = {'name': project.name,
                             'branch': project.branches(),
-                            'experimental': bool(int(project.experimental)),
+                            'experimental': int(project.experimental),
                             'group_name': project.group_name,
                             'git_url': project.git_url,
                             'version': project.version(),
@@ -98,7 +105,7 @@ class Project(cyclone.web.RequestHandler):
                     reply.append(
                             {'name': project.name,
                             'branch': project.branches(),
-                            'experimental': bool(int(project.experimental)),
+                            'experimental': int(project.experimental),
                             'group_name': project.group_name,
                             'git_url': project.git_url,
                             'version': project.version(),
@@ -114,6 +121,7 @@ class Project(cyclone.web.RequestHandler):
 
 
     def delete(self, name):
+        log.msg("deleting project %s" % name)
         try:
             project = Projects(name)
             git = Git(project)
@@ -251,5 +259,5 @@ restApp = cyclone.web.Application([
 ])
 
 application = service.Application("bricklayer_rest")
-server = internet.TCPServer(int(brickconfig.get('server', 'port')), restApp, interface="127.0.0.1")
+server = internet.TCPServer(int(brickconfig.get('server', 'port')), restApp, interface="0.0.0.0")
 server.setServiceParent(application)

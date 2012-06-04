@@ -60,7 +60,11 @@ class Git(object):
         return map(lambda x: x.strip(), branch_list)
 
     def clear_repo(self):
-        shutil.rmtree(self.workdir)
+        try:
+            shutil.rmtree(self.workdir)
+        except Exception, e:
+            log.info("could not remove folders but I'm ignoring it")
+            
 
     def last_commit(self, branch='master'):
         return open(os.path.join(self.workdir, '.git', 'refs', 'heads', branch)).read()

@@ -37,8 +37,8 @@ $(function(){
         });
 
         $("#action-enable-experimental-" + name).click(function(e) {
-            $.ajax({type: "PUT", url: "/project/" + name, data: 'experimental=1', success: function(data) {
-                    $("#alert-area-global").html('<div class="alert alert-success fade in"><a class="close" data-dismiss="alert">x</a><b>Experimental enabled</b> : ' + data + '</div>');
+            $.ajax({type: "PUT", url: "/project/" + name, dataType: 'json', data: '{"experimental":1}', success: function(data) {
+                    $("#alert-area-global").html('<div class="alert alert-success fade in"><a class="close" data-dismiss="alert">x</a><b>Experimental enabled</b> : ' + name + '</div>');
                     $("#alert-area-global").alert();
                     refresh_details(section, name);
                 }
@@ -46,8 +46,8 @@ $(function(){
         });
 
         $("#action-disable-experimental-" + name).click(function(e) {
-            $.ajax({type: "PUT", url: "/project/" + name, data: 'experimental=0', success: function(data) {
-                    $("#alert-area-global").html('<div class="alert alert-success fade in"><a class="close" data-dismiss="alert">x</a><b>Experimental disabled</b> : ' + data + '</div>');
+            $.ajax({type: "PUT", url: "/project/" + name, dataType: 'json', data: '{"experimental": 0}', success: function(data) {
+                    $("#alert-area-global").html('<div class="alert alert-success fade in"><a class="close" data-dismiss="alert">x</a><b>Experimental disabled</b> : ' + name + '</div>');
                     $("#alert-area-global").alert();
                     refresh_details(section, name);
                 }
