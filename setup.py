@@ -29,6 +29,13 @@ data_files_list.extend([
 setup(
     name='bricklayer',
     version='1.0',
+    author = "Rodrigo Sampaio Vaz",
+    author_email = "rodrigo.vaz@gmail.com",
+    description = ("A package builder that watch git repositories"
+                                   "developed at locaweb."),
+    license='Apache License',
+    keywords = "package builder debian rpm",
+    url = "http://locaweb.github.com",
     packages=find_packages(), 
     entry_points="""
     [console_scripts]

@@ -17,7 +17,7 @@ from build_info import BuildInfo
 
 log = logging.getLogger('builder')
 
-class DebBuilder():
+class BuilderDeb():
     def __init__(self, builder):
         self.builder = builder
         self.project = self.builder.project

@@ -17,7 +17,7 @@ from git import Git
 from glob import glob
 from types import *
 
-class RpmBuilder():
+class BuilderRpm():
 
     def __init__(self, builder):
         self.builder = builder
