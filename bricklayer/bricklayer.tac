@@ -26,7 +26,8 @@ class BricklayerFactory(protocol.ServerFactory):
     protocol = basic.LineReceiver()
 
     def __init__(self):
-        self.sched_projects()
+        log.msg("starting scheduler")
+        threads.deferToThread(self.sched_projects())
     
     def send_job(self, project_name, branch, release, version):
         log.msg('sched build: %s [%s:%s]' % (project_name, release, version))

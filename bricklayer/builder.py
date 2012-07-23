@@ -18,8 +18,8 @@ from twisted.internet import threads, reactor, defer
 from config import BrickConfig
 from projects import Projects
 
-from rpm_builder import RpmBuilder
-from deb_builder import DebBuilder
+from builder_rpm import BuilderRpm
+from builder_deb import BuilderDeb
 from dreque import Dreque
 
 config = BrickConfig()
@@ -75,9 +75,9 @@ class Builder:
                 shutil.copytree(self.git.workdir, self.workdir)
 
                 if self.build_system == 'rpm':
-                    self.package_builder = RpmBuilder(self)
+                    self.package_builder = BuilderRpm(self)
                 elif self.build_system == 'deb':
-                    self.package_builder = DebBuilder(self)
+                    self.package_builder = BuilderDeb(self)
 
                 os.chdir(self.workdir)
                 self.git.workdir = self.workdir
