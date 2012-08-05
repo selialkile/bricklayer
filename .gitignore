@@ -1,6 +1,12 @@
+debian/bricklayer*
+debian/files
+build
+*.egg-info
 workspace
 static/Build
 *.pyc
 */**.swp
 *.swp
 *.pid
+*.log.*
+*.log

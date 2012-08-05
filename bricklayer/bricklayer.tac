@@ -10,7 +10,7 @@ sys.path.append(os.path.join(os.path.dirname(bricklayer.__file__), 'utils'))
 import pystache
 
 from twisted.application import internet, service
-from twisted.internet import protocol, task, threads, reactor
+from twisted.internet import protocol, task, threads, reactor, defer
 from twisted.protocols import basic
 from twisted.python import log
 
@@ -22,12 +22,11 @@ from rest import restApp
 from dreque import Dreque, DrequeWorker
 
 
-class BricklayerFactory(protocol.ServerFactory):
-    protocol = basic.LineReceiver()
+class BricklayerService(service.Service):
 
     def __init__(self):
-        log.msg("starting scheduler")
-        threads.deferToThread(self.sched_projects())
+        log.msg("scheduler: init")
+        self.sched_task = task.LoopingCall(self.sched_builder)
     
     def send_job(self, project_name, branch, release, version):
         log.msg('sched build: %s [%s:%s]' % (project_name, release, version))
@@ -78,22 +77,21 @@ class BricklayerFactory(protocol.ServerFactory):
                         git.checkout_branch("master")
 
             except Exception, e:
-                log.msg("Something went really wrong: %s" % repr(e))
+                log.err(e)
                 
 
-    def sched_projects(self):
-        sched_task = task.LoopingCall(self.sched_builder)
-        sched_task.start(10.0)
+    def startService(self):
+        service.Service.startService(self)
+        log.msg("scheduler: start %s" % self.sched_task)
+        self.sched_task.start(10.0)
 
-brickconfig = BrickConfig()
-unix_socket = brickconfig.get('server', 'unix')
+    @defer.inlineCallbacks
+    def stopService(self):
+        service.Service.stopService(self)
+        yield self.sched_task.stop()
 
-bricklayer = service.MultiService()
 
-factory = BricklayerFactory()
-brickService = internet.UNIXServer(unix_socket, factory)
-
-brickService.setServiceParent(bricklayer)
+brickService = BricklayerService()
 
 application = service.Application("Bricklayer")
-bricklayer.setServiceParent(application)
+brickService.setServiceParent(application)

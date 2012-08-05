@@ -1,13 +1,6 @@
 import redis
 import time
-
-def transaction(method):
-    def new(*args):
-        args[0].redis_cli = args[0].connect()
-        ret = method(*args)
-        args[0].redis_cli.connection.disconnect()
-        return ret
-    return new
+from bricklayer.model_base import transaction
 
 class BuildInfo:
 

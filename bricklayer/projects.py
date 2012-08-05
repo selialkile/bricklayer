@@ -96,7 +96,6 @@ class Projects(ModelBase):
         redis_cli = connection_obj.connect()
         keys = redis_cli.keys('%s:*' % self.namespace)
         projects = []
-        redis_cli.connection.disconnect()
         for key in keys:
             key = key.replace('%s:' % self.namespace, '')
             projects.append(Projects(key)) 
