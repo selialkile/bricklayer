@@ -66,7 +66,7 @@ class Builder:
     def _exec(self, cmd, *args, **kwargs):
         return subprocess.Popen(cmd, *args, **kwargs)
 
-    def build_project(self, branch=None, release=None, version=None):
+    def build_project(self, branch=None, release=None, version=None, commit=None):
 
         if not self.project.is_building():
             self.project.start_building()
@@ -87,6 +87,10 @@ class Builder:
                     self.git.checkout_branch(branch)
                     self.package_builder.build(branch, release)
                     self.package_builder.upload(branch)
+                if release != None and commit != None:
+                    self.git.checkout_tag(commit)
+                    self.package_builder.build(branch)
+                    self.package_builder.upload(release)
                 else:
                     self.project.last_tag(release, self.git.last_tag(release))
                     self.git.checkout_tag(self.project.last_tag(release))
