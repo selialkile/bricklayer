@@ -2,7 +2,7 @@ import redis
 
 def transaction(method):
     def new(*args, **kwargs):
-        args[0].redis_cli = args[0].connect()
+        args[0].redis_cli = redis.Redis()
         ret = method(*args, **kwargs)
         if ret == None:
             ret = ""

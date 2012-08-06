@@ -22,7 +22,6 @@ class Projects(ModelBase):
         self.username = 'Bricklayer Builder'
         self.install_prefix = ''
         self.populate(self.name)
-        self.redis_cli = None
 
     def __dir__(self):
         return ['name', 'git_url', 'install_cmd', 'build_cmd', 'email', 'username', 'release', 'group_name', 'experimental']

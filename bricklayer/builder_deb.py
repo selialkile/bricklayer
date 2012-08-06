@@ -30,7 +30,11 @@ class BuilderDeb():
         control_data_new = None
 
         self.build_info = BuildInfo(self.project.name)
-        logfile = os.path.join(self.builder.workspace, 'log', '%s.%s.log' % (self.project.name, self.build_info.build_id))
+        logfile = os.path.join(
+                self.builder.workspace, 'log', '%s.%s.log' % (
+                    self.project.name, self.build_info.build_id
+                    )
+                )
         self.build_info.log(logfile)
         self.stdout = open(logfile, 'a+')
         self.stderr = self.stdout
