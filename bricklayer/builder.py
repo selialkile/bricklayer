@@ -43,7 +43,7 @@ class Builder(object):
         self.project = Projects(project)
         self.templates_dir = BrickConfig().get('workspace', 'template_dir')
         self.git = git.Git(self.project)
-        self.distro = 'debian'
+        self.distro = 'debian_squeeze'
         self.build_system = BrickConfig().get('build', 'system')
         self.schroot_dir = BrickConfig().get('schroot', 'dir')
         self.workspace = "%s/%s/%s" % (
