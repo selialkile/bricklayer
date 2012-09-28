@@ -163,9 +163,7 @@ class Build(cyclone.web.RequestHandler):
         project = Projects(project_name)
         release = self.get_argument('tag')
         version = self.get_argument('version')
-        commit = None
-        if len(self.get_arguments('commit')) > 0:
-            commit = self.get_argument('commit', default=None)  
+        commit = self.get_argument('commit', default=None)
 
         reactor.callInThread(queue.enqueue, 
                 'build', 
@@ -178,7 +176,6 @@ class Build(cyclone.web.RequestHandler):
                     'commit' : commit,
                     }
                 )
-
         self.write(cyclone.escape.json_encode({'status': 'build of branch %s scheduled' % release}))
 
     def get(self, project_name):

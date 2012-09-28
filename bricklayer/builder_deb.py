@@ -22,8 +22,9 @@ class BuilderDeb():
         self.builder = builder
         self.project = self.builder.project
         log.info("Debian builder initialized: %s" % self.builder.workdir)
+        log.info("Building with options: %s" % self.builder.build_options.options)
 
-    def build(self, branch, last_tag=None):
+    def build(self, branch, last_tag=None, force_version=None, force_release=None):
         templates = {}
         templates_dir = os.path.join(self.builder.templates_dir, 'deb')
         debian_dir = os.path.join(self.builder.workdir, 'debian')
@@ -59,74 +60,79 @@ class BuilderDeb():
             }
 
         changelog = os.path.join(self.builder.workdir, 'debian', 'changelog')
-        if os.path.isfile(changelog):
-            os.rename(changelog, "%s.save" % changelog)
+        if hasattr(self.builder.build_options, 'changelog') and self.builder.build_options.changelog:
 
-        def read_file_data(f):
-            template_fd = open(os.path.join(templates_dir, f))
-            templates[f] = pystache.template.Template(template_fd.read()).render(context=template_data)
-            template_fd.close()
+            if os.path.isfile(changelog):
+                os.rename(changelog, "%s.save" % changelog)
 
-        if not os.path.isdir(debian_dir):
+            def read_file_data(f):
+                template_fd = open(os.path.join(templates_dir, f))
+                templates[f] = pystache.template.Template(template_fd.read()).render(context=template_data)
+                template_fd.close()
 
-            map(read_file_data, ['changelog', 'control', 'rules'])
+            if not os.path.isdir(debian_dir):
 
-            os.makedirs( os.path.join( debian_dir, self.project.name, self.project.install_prefix))
+                map(read_file_data, ['changelog', 'control', 'rules'])
 
-            for filename, data in templates.iteritems():
-                open(os.path.join(debian_dir, filename), 'w').write(data)
+                os.makedirs( os.path.join( debian_dir, self.project.name, self.project.install_prefix))
 
-        changelog_entry = """%(name)s (%(version)s) %(branch)s; urgency=low
+                for filename, data in templates.iteritems():
+                    open(os.path.join(debian_dir, filename), 'w').write(data)
+
+            changelog_entry = """%(name)s (%(version)s) %(branch)s; urgency=low
 
   * Latest commits
   %(commits)s
 
  -- %(username)s <%(email)s>  %(date)s
 """
-        changelog_data = {
-                'name': self.project.name,
-                'version': self.project.version(branch),
-                'branch': branch,
-                'commits': '  '.join(self.builder.git.log()),
-                'username': self.project.username,
-                'email': self.project.email,
-                'date': time.strftime("%a, %d %h %Y %T %z"),
-            }
+            changelog_data = {
+                    'name': self.project.name,
+                    'version': self.project.version(branch),
+                    'branch': branch,
+                    'commits': '  '.join(self.builder.git.log()),
+                    'username': self.project.username,
+                    'email': self.project.email,
+                    'date': time.strftime("%a, %d %h %Y %T %z"),
+                }
 
 
-        if last_tag != None and last_tag.startswith('stable'):
-            self.project.version('stable', last_tag.split('_')[1])
-            changelog_data.update({'version': self.project.version('stable'), 'branch': 'stable'})
-            self.build_info.version(self.project.version('stable'))
-            self.build_info.release('stable')
+            if last_tag != None and last_tag.startswith('stable'):
+                self.project.version('stable', last_tag.split('_')[1])
+                changelog_data.update({'version': self.project.version('stable'), 'branch': 'stable'})
+                self.build_info.version(self.project.version('stable'))
+                self.build_info.release('stable')
 
-        elif last_tag != None and last_tag.startswith('testing'):
-            self.project.version('testing', last_tag.split('_')[1])
-            changelog_data.update({'version': self.project.version('testing'), 'branch': 'testing'})
-            self.build_info.version(self.project.version('testing'))
-            self.build_info.release('testing')
+            elif last_tag != None and last_tag.startswith('testing'):
+                self.project.version('testing', last_tag.split('_')[1])
+                changelog_data.update({'version': self.project.version('testing'), 'branch': 'testing'})
+                self.build_info.version(self.project.version('testing'))
+                self.build_info.release('testing')
 
-        elif last_tag != None and last_tag.startswith('unstable'):
-            self.project.version('unstable', last_tag.split('_')[1])
-            changelog_data.update({'version': self.project.version('unstable'), 'branch': 'unstable'})
-            self.build_info.version(self.project.version('unstable'))
-            self.build_info.release('unstable')
+            elif last_tag != None and last_tag.startswith('unstable'):
+                self.project.version('unstable', last_tag.split('_')[1])
+                changelog_data.update({'version': self.project.version('unstable'), 'branch': 'unstable'})
+                self.build_info.version(self.project.version('unstable'))
+                self.build_info.release('unstable')
 
+            else:
+                """
+                otherwise it should change the distribution to experimental
+                """
+
+                if self.project.version(branch):
+                    version_list = self.project.version(branch).split('.')
+                    version_list[len(version_list) - 1] = str(int(version_list[len(version_list) - 1]) + 1)
+                    self.project.version(branch, '.'.join(version_list))
+
+                    changelog_data.update({'version': self.project.version(branch), 'branch': 'experimental'})
+                self.build_info.version(self.project.version(branch))
+                self.build_info.release('experimental:%s' % branch)
+
+            open(os.path.join(self.builder.workdir, 'debian', 'changelog'), 'w').write(changelog_entry % changelog_data)
         else:
-            """
-            otherwise it should change the distribution to experimental
-            """
-
-            if self.project.version(branch):
-                version_list = self.project.version(branch).split('.')
-                version_list[len(version_list) - 1] = str(int(version_list[len(version_list) - 1]) + 1)
-                self.project.version(branch, '.'.join(version_list))
-
-                changelog_data.update({'version': self.project.version(branch), 'branch': 'experimental'})
-            self.build_info.version(self.project.version(branch))
-            self.build_info.release('experimental:%s' % branch)
-
-        open(os.path.join(self.builder.workdir, 'debian', 'changelog'), 'w').write(changelog_entry % changelog_data)
+            self.build_info.version(force_version)
+            self.build_info.release(force_release)
 
         rvm_env = {}
         rvm_rc = os.path.join(self.builder.workdir, '.rvmrc')
@@ -175,7 +181,7 @@ class BuilderDeb():
         clean_cmd = self.builder._exec(['dh', 'clean'], cwd=self.builder.workdir)
         clean_cmd.wait()
 
-        if os.path.isfile("%s.save" % changelog):
+        if self.builder.build_options.changelog and os.path.isfile("%s.save" % changelog):
             os.rename("%s.save" % changelog, changelog)
 
     def upload(self, branch):
@@ -183,9 +189,12 @@ class BuilderDeb():
         log.info(changes_file)
         distribution, files = self.parse_changes(changes_file)
         self.local_repo(distribution, files)
-        self.upload_files(distribution, files)
-        upload_file = changes_file.replace('.changes', '.upload')
-        open(upload_file, 'w').write("done")
+        try:
+            self.upload_files(distribution, files)
+            upload_file = changes_file.replace('.changes', '.upload')
+            open(upload_file, 'w').write("done")
+        except Exception, e:
+            log.error("Package could be uploaded: %s", e)
 
     def parse_changes(self, changes_file):
         content = open(changes_file).readlines()

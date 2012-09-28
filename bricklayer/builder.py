@@ -20,6 +20,7 @@ from projects import Projects
 
 from builder_rpm import BuilderRpm
 from builder_deb import BuilderDeb
+from build_options import BuildOptions
 from dreque import Dreque
 
 config = BrickConfig()
@@ -44,6 +45,7 @@ class Builder:
         self.templates_dir = BrickConfig().get('workspace', 'template_dir')
         self.git = git.Git(self.project)
         self.build_system = BrickConfig().get('build', 'system')
+        self.build_options = BuildOptions(self.git.workdir)
 
         if self.build_system == 'rpm':
             self.mod_install_cmd = self.project.install_cmd.replace(
@@ -83,13 +85,13 @@ class Builder:
                 self.git.workdir = self.workdir
                 self.git.checkout_branch(branch)
 
-                if release == 'experimental':
+                if release == 'experimental' and self.build_options.changelog:
                     self.git.checkout_branch(branch)
                     self.package_builder.build(branch, release)
                     self.package_builder.upload(branch)
                 if release != None and commit != None:
                     self.git.checkout_tag(commit)
-                    self.package_builder.build(branch)
+                    self.package_builder.build(branch, force_version=version, force_release=release)
                     self.package_builder.upload(release)
                 else:
                     self.project.last_tag(release, self.git.last_tag(release))
