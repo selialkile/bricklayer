@@ -5,6 +5,7 @@ import os
 import subprocess
 import time
 import ConfigParser
+import shlex
 import shutil
 import logging
 
@@ -38,23 +39,37 @@ def build_project(kargs):
     kargs.pop('project')
     yield builder.build_project(**kargs)
 
-class Builder:
+class Builder(object):
     def __init__(self, project):
-        self.workspace = BrickConfig().get('workspace', 'dir')
         self.project = Projects(project)
         self.templates_dir = BrickConfig().get('workspace', 'template_dir')
         self.git = git.Git(self.project)
+        self.distro = 'debian_squeeze'
         self.build_system = BrickConfig().get('build', 'system')
         self.build_options = BuildOptions(self.git.workdir)
+
+        self.schroot_dir = BrickConfig().get('schroot', 'dir')
+        self.workspace = "%s/%s/%s" % (
+            self.schroot_dir,
+            self.project.name,
+            BrickConfig().get('workspace', 'dir')
+        )
 
         if self.build_system == 'rpm':
             self.mod_install_cmd = self.project.install_cmd.replace(
                 'BUILDROOT', '%{buildroot}'
             )
         elif self.build_system == 'deb' or self.build_system == None:
+            self.chbootstrap = ('/usr/bin/cdebootstrap --arch=amd64 stable %s/%s %s' %
+                                    (self.schroot_dir, 'template_debian',
+                                     BrickConfig().get('schroot', 'mirror_%s' % self.distro))
+                                )
             self.mod_install_cmd = self.project.install_cmd.replace(
                 'BUILDROOT', 'debian/tmp'
             )
+            if not os.path.isdir("%s/%s" % (self.schroot_dir, 'template_%s' % self.distro)):
+                chb = self._exec(shlex.split(self.chbootstrap))
+                chb.wait()
 
         if not os.path.isdir(self.workspace):
             os.makedirs(self.workspace)
@@ -66,7 +81,11 @@ class Builder:
         self.stderr = self.stdout
 
     def _exec(self, cmd, *args, **kwargs):
-        return subprocess.Popen(cmd, *args, **kwargs)
+        if (not hasattr(self, 'chbootstrap')) or ('/usr/bin/cdebootstrap' in cmd):
+            log.info(cmd)
+            return subprocess.Popen(cmd, *args, **kwargs)
+        else:
+            return subprocess.Popen(['schroot', '-c', self.project.name, '--'] + cmd, *args, **kwargs)
 
     def build_project(self, branch=None, release=None, version=None, commit=None):
 
@@ -79,6 +98,9 @@ class Builder:
                 if self.build_system == 'rpm':
                     self.package_builder = BuilderRpm(self)
                 elif self.build_system == 'deb':
+                    if not os.path.isdir("%s/%s" % (self.schroot_dir, self.projet.name)):
+                        shutil.copytree("%s/%s" % (self.schroot_dir, 'template_%s' % self.distro),
+                                        "%s/%s" % (self.schroot_dir, self.projet.name))
                     self.package_builder = BuilderDeb(self)
 
                 os.chdir(self.workdir)
@@ -99,7 +121,7 @@ class Builder:
                     self.package_builder.build(branch, self.project.last_tag(release))
                     self.package_builder.upload(release)
                 self.git.checkout_branch('master')
-               
+
                 shutil.rmtree(self.workdir)
 
             except Exception, e:
