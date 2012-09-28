@@ -43,6 +43,7 @@ class Builder(object):
         self.project = Projects(project)
         self.templates_dir = BrickConfig().get('workspace', 'template_dir')
         self.git = git.Git(self.project)
+        self.distro = 'debian'
         self.build_system = BrickConfig().get('build', 'system')
         self.schroot_dir = BrickConfig().get('schroot', 'dir')
         self.workspace = "%s/%s/%s" % (
@@ -57,12 +58,15 @@ class Builder(object):
             )
         elif self.build_system == 'deb' or self.build_system == None:
             self.chbootstrap = ('/usr/bin/cdebootstrap --arch=amd64 stable %s/%s %s' %
-                                    (self.schroot_dir, self.project.name,
-                                     BrickConfig().get('schroot', 'mirror_debian'))
+                                    (self.schroot_dir, 'template_debian',
+                                     BrickConfig().get('schroot', 'mirror_%s' % self.distro))
                                 )
             self.mod_install_cmd = self.project.install_cmd.replace(
                 'BUILDROOT', 'debian/tmp'
             )
+            if not os.path.isdir("%s/%s" % (self.schroot_dir, 'template_%s' % self.distro)):
+                chb = self._exec(shlex.split(self.chbootstrap))
+                chb.wait()
 
         if not os.path.isdir(self.workspace):
             os.makedirs(self.workspace)
@@ -91,8 +95,9 @@ class Builder(object):
                 if self.build_system == 'rpm':
                     self.package_builder = BuilderRpm(self)
                 elif self.build_system == 'deb':
-                    chb = self._exec(shlex.split(self.chbootstrap))
-                    chb.wait()
+                    if not os.path.isdir("%s/%s" % (self.schroot_dir, self.projet.name)):
+                        shutil.copytree("%s/%s" % (self.schroot_dir, 'template_%s' % self.distro),
+                                        "%s/%s" % (self.schroot_dir, self.projet.name))
                     self.package_builder = BuilderDeb(self)
 
                 os.chdir(self.workdir)
