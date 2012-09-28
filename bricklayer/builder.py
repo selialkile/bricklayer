@@ -57,7 +57,7 @@ class Builder(object):
             )
         elif self.build_system == 'deb' or self.build_system == None:
             self.chbootstrap = ('/usr/bin/cdebootstrap --arch=amd64 stable %s/%s %s' %
-                                    (self.schroot, self.project,
+                                    (self.schroot_dir, self.project.name,
                                      BrickConfig().get('schroot', 'mirror_debian'))
                                 )
             self.mod_install_cmd = self.project.install_cmd.replace(
@@ -74,7 +74,8 @@ class Builder(object):
         self.stderr = self.stdout
 
     def _exec(self, cmd, *args, **kwargs):
-        if (not 'chbootstrap' in self) or ('/usr/bin/cdebootstrap' in cmd):
+        if (not hasattr(self, 'chbootstrap')) or ('/usr/bin/cdebootstrap' in cmd):
+            log.info(cmd)
             return subprocess.Popen(cmd, *args, **kwargs)
         else:
             return subprocess.Popen(['schroot', '-c', self.project.name, '--'] + cmd, *args, **kwargs)
@@ -90,7 +91,8 @@ class Builder(object):
                 if self.build_system == 'rpm':
                     self.package_builder = BuilderRpm(self)
                 elif self.build_system == 'deb':
-                    self._exec(shlex.split(self.cdebootstrap))
+                    chb = self._exec(shlex.split(self.chbootstrap))
+                    chb.wait()
                     self.package_builder = BuilderDeb(self)
 
                 os.chdir(self.workdir)
