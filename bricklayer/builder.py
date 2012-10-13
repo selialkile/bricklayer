@@ -98,7 +98,7 @@ class Builder(object):
                 if self.build_system == 'rpm':
                     self.package_builder = BuilderRpm(self)
                 elif self.build_system == 'deb':
-                    if not os.path.isdir("%s/%s" % (self.schroot_dir, self.projet.name)):
+                    if not os.path.isdir("%s/%s" % (self.schroot_dir, self.project.name)):
                         shutil.copytree("%s/%s" % (self.schroot_dir, 'template_%s' % self.distro),
                                         "%s/%s" % (self.schroot_dir, self.projet.name))
                     self.package_builder = BuilderDeb(self)
