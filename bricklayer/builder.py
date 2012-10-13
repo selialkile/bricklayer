@@ -60,8 +60,8 @@ class Builder(object):
                 'BUILDROOT', '%{buildroot}'
             )
         elif self.build_system == 'deb' or self.build_system == None:
-            self.chbootstrap = ('/usr/bin/cdebootstrap --arch=amd64 stable %s/%s %s' %
-                                    (self.schroot_dir, 'template_debian',
+            self.chbootstrap = ('/usr/bin/cdebootstrap --arch=%s stable %s/%s %s' %
+                                    (BrickConfig().get('schroot', 'arch', self.schroot_dir, 'template_debian',
                                      BrickConfig().get('schroot', 'mirror_%s' % self.distro))
                                 )
             self.mod_install_cmd = self.project.install_cmd.replace(
