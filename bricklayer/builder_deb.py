@@ -185,7 +185,15 @@ class BuilderDeb():
             os.rename("%s.save" % changelog, changelog)
 
     def upload(self, branch):
-        changes_file = glob.glob('%s/%s_%s_*.changes' % (self.builder.workspace, self.project.name, self.project.version(branch)))[0]
+        changes_file = glob.glob('%s/%s_%s_*.changes' % (
+                "%s/%s" % (self.builder.schroot_dir, self.builder.workspace), 
+                self.project.name, 
+                self.project.version(branch))
+        )[0]
+        log.info('%s/%s_%s_*.changes' % (
+                "%s/%s" % (self.builder.schroot_dir, self.builder.workspace), 
+                self.project.name, 
+                self.project.version(branch)))
         log.info(changes_file)
         distribution, files = self.parse_changes(changes_file)
         self.local_repo(distribution, files)

@@ -44,7 +44,7 @@ class Builder(object):
         self.project = Projects(project)
         self.templates_dir = BrickConfig().get('workspace', 'template_dir')
         self.git = git.Git(self.project)
-        self.distro = 'debian_squeeze'
+        self.distro = 'debian'
         self.build_system = BrickConfig().get('build', 'system')
         self.build_options = BuildOptions(self.git.workdir)
 
@@ -60,8 +60,8 @@ class Builder(object):
                 'BUILDROOT', '%{buildroot}'
             )
         elif self.build_system == 'deb' or self.build_system == None:
-            self.chbootstrap = ('/usr/bin/cdebootstrap --arch=%s stable %s/%s %s' %
-                                    (BrickConfig().get('schroot', 'arch', self.schroot_dir, 'template_debian',
+            self.chbootstrap = ('/usr/bin/cdebootstrap --arch=amd64 stable %s/%s %s' %
+                                    (self.schroot_dir, 'template_%s' % self.distro,
                                      BrickConfig().get('schroot', 'mirror_%s' % self.distro))
                                 )
             self.mod_install_cmd = self.project.install_cmd.replace(
@@ -82,10 +82,9 @@ class Builder(object):
 
     def _exec(self, cmd, *args, **kwargs):
         if (not hasattr(self, 'chbootstrap')) or ('/usr/bin/cdebootstrap' in cmd):
-            log.info(cmd)
             return subprocess.Popen(cmd, *args, **kwargs)
         else:
-            return subprocess.Popen(['schroot', '-c', self.project.name, '--'] + cmd, *args, **kwargs)
+            return subprocess.Popen(['schroot', '-c', self.project.name, '-d', self.workdir, '--'] + cmd, *args, **kwargs)
 
     def build_project(self, branch=None, release=None, version=None, commit=None):
 
@@ -129,4 +128,3 @@ class Builder(object):
             finally:
                 self.project.stop_building()
                 shutil.rmtree(self.workdir)
-
