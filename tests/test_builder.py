@@ -1,6 +1,6 @@
 import sys
 from nose import *
 
-class BuilderTest:
+class TestBuilder:
     def build_init_test(self):
         pass
