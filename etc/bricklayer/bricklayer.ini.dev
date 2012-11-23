@@ -1,0 +1,32 @@
+[redis]
+redis-server: 127.0.0.1
+
+[static]
+dir: web
+
+[container]
+container_type = debian
+debian_base = /root/containers/debian
+
+[workspace]
+dir: /var/lib/bricklayer/workspace
+template_dir: pkg_template
+
+; choose your build system: deb or rpm
+[build]
+system: deb
+
+; gpg keyid at /etc/bricklayer/gpg.key
+[gpg]
+keyid: 65916415
+
+[local_repo]
+dir: /var/lib/bricklayer/repo
+
+[log]
+file: /tmp/bricklayer-builder.log
+
+[server]
+unix: /var/run/bricklayer.sock
+port: 8080
+

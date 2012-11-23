@@ -186,14 +186,15 @@ class BuilderDeb():
 
     def upload(self, branch):
         changes_file = glob.glob('%s/%s_%s_*.changes' % (
-                "%s/%s" % (self.builder.schroot_dir, self.builder.workspace), 
+                BrickConfig().get('workspace', 'dir'), 
                 self.project.name, 
                 self.project.version(branch))
         )[0]
         log.info('%s/%s_%s_*.changes' % (
-                "%s/%s" % (self.builder.schroot_dir, self.builder.workspace), 
+                self.builder.workspace, 
                 self.project.name, 
-                self.project.version(branch)))
+                self.project.version(branch))
+        )
         log.info(changes_file)
         distribution, files = self.parse_changes(changes_file)
         self.local_repo(distribution, files)

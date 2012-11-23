@@ -23,6 +23,8 @@ from projects import Projects
 from builder_rpm import BuilderRpm
 from builder_deb import BuilderDeb
 from build_options import BuildOptions
+from build_container import BuildContainer
+
 from dreque import Dreque
 
 config = BrickConfig()
@@ -49,19 +51,30 @@ class Builder(object):
         self.build_system = BrickConfig().get('build', 'system')
         self.build_options = BuildOptions(self.git.workdir)
 
-        self.workspace = "%s/%s" % (
-            self.project.name,
-            BrickConfig().get('workspace', 'dir')
+        if not self.build_options.not_found:
+            self.build_container = BuildContainer(self.project)
+            self.build_container.setup()
+            self.workspace = self.build_container.workspace
+            self.git.workdir = "%s/%s" % (self.workspace, self.project.name)
+        else:
+            self.build_container = None
+            self.workspace = "%s/%s" % (
+                BrickConfig().get('workspace', 'dir'),
+                self.project.name,
             )
+
+        self.real_workspace = "%s/%s" % (
+            BrickConfig().get('workspace', 'dir'), self.project.name
+        )
 
         if self.build_system == 'rpm':
             self.mod_install_cmd = self.project.install_cmd.replace(
                 'BUILDROOT', '%{buildroot}'
-                )
+            )
         elif self.build_system == 'deb' or self.build_system == None:
             self.mod_install_cmd = self.project.install_cmd.replace(
                 'BUILDROOT', 'debian/tmp'
-                )            
+            )            
         if not os.path.isdir(self.workspace):
             os.makedirs(self.workspace)
 
@@ -72,7 +85,12 @@ class Builder(object):
         self.stderr = self.stdout
 
     def _exec(self, cmd, *args, **kwargs):
+        if self.build_options.not_found:
             return subprocess.Popen(cmd, *args, **kwargs)
+        else:
+            chroot_cmd = "chroot %s bash -c \"cd %s; %s\"" % (self.build_container.dir, self.real_workspace, " ".join(cmd))
+            kwargs.update({'shell': True})
+            return subprocess.Popen(chroot_cmd, *args, **kwargs)
         
 
     def build_project(self, branch=None, release=None, version=None, commit=None):
@@ -81,6 +99,7 @@ class Builder(object):
             self.project.start_building()
             try:
                 self.workdir = "%s-%s" % (self.git.workdir, release)
+                self.real_workspace = "%s-%s" % (self.real_workspace, release)
                 shutil.copytree(self.git.workdir, self.workdir)
 
                 if self.build_system == 'rpm':
@@ -106,11 +125,10 @@ class Builder(object):
                     self.package_builder.build(branch, self.project.last_tag(release))
                     self.package_builder.upload(release)
                 self.git.checkout_branch('master')
-
-                shutil.rmtree(self.workdir)
-
             except Exception, e:
                 log.exception("build failed: %s" % repr(e))
             finally:
                 self.project.stop_building()
                 shutil.rmtree(self.workdir)
+                if self.build_container != None:
+                    self.build_container.teardown()
