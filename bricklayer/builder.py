@@ -3,6 +3,7 @@ reload(sys)
 sys.setdefaultencoding('utf8')
 
 import os
+import re
 import subprocess
 import time
 import ConfigParser
@@ -47,7 +48,6 @@ class Builder(object):
         self.project = Projects(project)
         self.templates_dir = BrickConfig().get('workspace', 'template_dir')
         self.git = git.Git(self.project)
-        self.distro = 'debian'
         self.build_system = BrickConfig().get('build', 'system')
         self.build_options = BuildOptions(self.git.workdir)
 
@@ -84,6 +84,15 @@ class Builder(object):
         self.stdout = None
         self.stderr = self.stdout
 
+    def build_install_deps(self):
+        p = self._exec("dpkg-checkbuilddeps".split(), stderr=subprocess.PIPE)
+        out = p.stderr.read()
+        if out != "":
+            deps = re.findall("([a-z0-9\-]+\s|[a-z0-9\-]+$)", out.split("dependencies:")[1])
+            deps = map(lambda x: x.strip(), deps)
+            apt_cmd = "apt-get -y --force-yes install %s" % " ".join(deps)
+            self._exec(apt_cmd.split())
+        
     def _exec(self, cmd, *args, **kwargs):
         if self.build_options.not_found:
             return subprocess.Popen(cmd, *args, **kwargs)

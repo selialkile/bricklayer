@@ -36,6 +36,7 @@ class BuilderDeb():
                     self.project.name, self.build_info.build_id
                     )
                 )
+        log.info("build log file: %s" % logfile)
         self.build_info.log(logfile)
         self.stdout = open(logfile, 'a+')
         self.stderr = self.stdout
@@ -273,7 +274,6 @@ BinDirectory "dists/experimental" {
                             self.project.group_name
                         ))
 
-
         os.chdir(self.builder.workspace)
 
         for f in files:
@@ -302,14 +302,3 @@ BinDirectory "dists/experimental" {
         except Exception, e:
             log.info(repr(e))
         ftp.quit()
-
-    def promote_to(self, version, release):
-        self.project.version(version=version)
-        self.project.release = release
-        self.project.save()
-
-    def promote_deb(self):
-        self.builder.git.create_tag("%s.%s" % (self.project.version(), self.project.release))
-        dch_cmd = self.builder._exec(['dch', '-r', '--no-force-save-on-release', '--newversion', '%s.%s' % (self.project.version(), self.project.release)], cwd=self.builder.workdir)
-        dch_cmd.wait()
-
