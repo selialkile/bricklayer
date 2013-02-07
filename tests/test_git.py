@@ -9,10 +9,6 @@ sys.path.append('../utils')
 from nose.tools import *
 from bricklayer.git import Git
 
-def setup():
-    if not os.path.isdir('tests/workspace'):
-        os.mkdir('tests/workspace')
-
 def teardown():
     if os.path.isdir('tests/workspace'):
         shutil.rmtree('tests/workspace', ignore_errors=True)
