@@ -34,40 +34,41 @@ Bricklayer has a restful interface that accepts the following parameters:
 
 For projects:
 
-<pre>
-POST /project:
-  name="bricklayer" # The project name
-  version="1.0-1"   # Initial version (will be incremented by each git commit or hudson git tag)
-  git_url="git://host/project/repository.git" # Repository URL to watch
-  branch="master"  # Branch to follow
-  build_cmd="make"  # Command within your project that generate binaries or prepare your project to be installed
-  install_cmd="make install PREFIX=debian/tmp" # A command within your project that install the generated binaries
-  respository_url="ftp.location.com" # A ftp package repository that your package will be uploaded
-  repository_user="a_user" # ftp user for this repository
-  repository_passwd="a_g00dP455w0rd" # needless to explain
+::
 
-GET /project/project_name:
-  Return the attributes of the project in JSON format
+  POST /project:
+    name="bricklayer" # The project name
+    version="1.0-1"   # Initial version (will be incremented by each git commit or hudson git tag)
+    git_url="git://host/project/repository.git" # Repository URL to watch
+    branch="master"  # Branch to follow
+    build_cmd="make"  # Command within your project that generate binaries or prepare your project to be installed
+    install_cmd="make install PREFIX=debian/tmp" # A command within your project that install the generated binaries
+    respository_url="ftp.location.com" # A ftp package repository that your package will be uploaded
+    repository_user="a_user" # ftp user for this repository
+    repository_passwd="a_g00dP455w0rd" # needless to explain
 
-POST /build/project_name
-  branch="master" # inform the branch that will schedule a build
+  GET /project/project_name:
+    Return the attributes of the project in JSON format
 
-GET /build/project_name
-  Return an array of completed builds
+  POST /build/project_name
+    branch="master" # inform the branch that will schedule a build
 
-GET /log/project_name/build_number
-  Return the logfile for the given build number
-</pre>
+  GET /build/project_name
+    Return an array of completed builds
+
+  GET /log/project_name/build_number
+    Return the logfile for the given build number
+
 
 For groups:
 
-<pre>
-POST /group:
-  name="group" # The group name
-  repo_addr="repository_url" # The package repository URL
-  repo_user="user" # The package repository user
-  repo_passwd="p4ssw0rd" # The package repository password
-</pre>
+::
+
+  POST /group:
+    name="group" # The group name
+    repo_addr="repository_url" # The package repository URL
+    repo_user="user" # The package repository user
+    repo_passwd="p4ssw0rd" # The package repository password
 
 
 Development
@@ -77,39 +78,40 @@ To run bricklayer for development you need some tools.
 
 Firstly install redis-server
 
-<pre>
-apt-get -y install redis-server
-</pre>
+::
+
+  apt-get -y install redis-server
+
 
 If you already have python installed, you can use pip for twisted:
 
-<pre>
-pip install twisted
-</pre>
+::
+
+  pip install twisted
 
 Use python path on the current directory, so the namespace will be acessible:
 
-<pre>
-export PYTHONPATH="."
-</pre>
+::
+
+  export PYTHONPATH="."
 
 Point the bricklayer config file to the local one:
 
-<pre>
-export BRICKLAYERCONFIG=etc/bricklayer/bricklayer.ini
-</pre>
+::
+
+  export BRICKLAYERCONFIG=etc/bricklayer/bricklayer.ini
 
 Run twisted to get the bricklayer interface available at htt://localhost
 
-<pre>
-twistd -ny bricklayer/bricklayer.tac
-</pre>
+::
+
+  twistd -ny bricklayer/bricklayer.tac
 
 Run the bricklayer consumers
 
-<pre>
-python bricklayer/build_consumer.py
-</pre>
+::
+  
+  python bricklayer/build_consumer.py
 
 Building ruby applications ?
 ============================
