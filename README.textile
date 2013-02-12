@@ -88,13 +88,19 @@ Point the bricklayer config file to the local one:
 export BRICKLAYERCONFIG=etc/bricklayer/bricklayer.ini
 </pre>
 
-Run twisted to get the bricklayer interface available at htt://localhost
+Run the scheduler to clone/pull projects and schedule new builds
 
 <pre>
 twistd -ny bricklayer/bricklayer.tac
 </pre>
 
-Run the bricklayer consumers
+Run rest interface to be able to access the web interface
+
+<pre>
+twistd -ny bricklayer/rest.py
+</pre>
+
+Run the bricklayer consumers that will consume the schedule and generates packages
 
 <pre>
 python bricklayer/build_consumer.py
