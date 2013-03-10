@@ -16,12 +16,12 @@ import cyclone.escape
 from twisted.internet import reactor
 from twisted.python import log
 from twisted.application import service, internet
-from dreque import Dreque
+#from dreque import Dreque
 
 
 brickconfig = BrickConfig()
 
-queue = Dreque(brickconfig.get('redis', 'redis-server'))
+#queue = Dreque(brickconfig.get('redis', 'redis-server'))
 
 class Project(cyclone.web.RequestHandler):
     def post(self, *args):
@@ -49,7 +49,7 @@ class Project(cyclone.web.RequestHandler):
                 project.group_name = self.get_argument('group_name')
                 project.save()
                 log.msg('Project created:', project.name)
-                reactor.callInThread(queue.enqueue, 'build', 'builder.build_project', {
+                reactor.callInThread(Builder.build_project, {
                             'project': project.name, 
                             'branch': self.get_argument('branch'), 
                             'release': 'experimental'
@@ -149,7 +149,7 @@ class Branch(cyclone.web.RequestHandler):
         else:
             project.add_branch(branch)
             project.version(branch, '0.1')
-            reactor.callInThread(queue.enqueue, 'build', 'builder.build_project', {'project': project.name, 'branch': self.get_argument('branch'), 'release': 'experimental'})
+            reactor.callInThread(Builder.build_project, {'project': project.name, 'branch': self.get_argument('branch'), 'release': 'experimental'})
             self.write(cyclone.escape.json_encode({'status': 'ok'}))
 
     def delete(self, project_name):
@@ -165,9 +165,7 @@ class Build(cyclone.web.RequestHandler):
         version = self.get_argument('version')
         commit = self.get_argument('commit', default=None)
 
-        reactor.callInThread(queue.enqueue, 
-                'build', 
-                'builder.build_project', 
+        reactor.callInThread(Builder.build_project, 
                 {
                     'project': project.name, 
                     'branch' : 'master', 

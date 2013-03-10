@@ -2,7 +2,7 @@ import os
 import yaml
 
 class BuildOptions(object):
-	options = {'changelog': False, 'experimental': False, 'rvm': 'system', 'not_found': False}
+	options = {'changelog': True, 'experimental': False, 'rvm': 'system', 'not_found': False}
 
 	def __init__(self, wdir):
 		if os.path.isfile(os.path.join(wdir, '.bricklayer.yml')):

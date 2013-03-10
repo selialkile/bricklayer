@@ -19,8 +19,34 @@ set -e
 
 DBFILE=/var/lib/bricklayer/bricklayer.db
 
+rebuild_cache()
+{
+    # remove all cache files, then rebuild for the installed python versions
+    rm -f /usr/lib/python[23].?/*-packages/twisted/plugins/dropin.cache
+    for p in $(pyversions -i); do
+	$p -c 'from twisted.plugin import IPlugin, getPlugins; list(getPlugins(IPlugin))' \
+	  >/dev/null 2>&1 || true
+    if [ -d /usr/lib/${p}/dist-packages/twisted/plugins ]; then
+        ln -sf /usr/share/pyshared/twisted/plugins/txbricklayer.py /usr/lib/${p}/dist-packages/twisted/plugins/
+        ln -sf /usr/share/pyshared/twisted/plugins/txbricklayer_web.py /usr/lib/${p}/dist-packages/twisted/plugins/
+
+    elif [ -d /usr/lib/${p}/site-packages/twisted/plugins ]; then
+        ln -sf /usr/share/pyshared/twisted/plugins/txbricklayer.py /usr/lib/${p}/site-packages/twisted/plugins/
+        ln -sf /usr/share/pyshared/twisted/plugins/txbricklayer_web.py /usr/lib/${p}/site-packages/twisted/plugins/
+    fi
+
+    done
+}
+
 case "$1" in
+    triggered)
+	if [ "$2" = twisted-plugins-cache ]; then
+	    rebuild_cache
+	fi
+	;;
+
     configure)
+        rebuild_cache
         if [ -e ${DBFILE}.save ]; then
             mv ${DBFILE}.save ${DBFILE}
         fi

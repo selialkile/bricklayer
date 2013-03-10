@@ -4,3 +4,4 @@ recursive-include db bricklayer.db
 recursive-include pkg_template *
 recursive-include bricklayer/utils *
 recursive-include web *
+graft twisted

@@ -1,5 +1,13 @@
 import os
-from setuptools import setup, find_packages
+from distutils.core import setup
+try:
+    import twisted
+except ImportError:
+    raise SystemExit("twisted not found.  Make sure you "
+                     "have installed the Twisted core package.")
+def refresh_plugin_cache():
+    from twisted.plugin import IPlugin, getPlugins
+    list(getPlugins(IPlugin))
 
 template_dir = []
 for root, dirs, files in os.walk('pkg_template'):
@@ -22,10 +30,10 @@ for root, dirs, files in os.walk('web'):
 
 data_files_list = template_dir
 data_files_list.extend([
-        ('/etc/bricklayer/', ['etc/bricklayer/bricklayer.ini',
-            'etc/bricklayer/gpg.key', 'bricklayer/bricklayer.tac']),
-    ]
-)
+        ('/etc/bricklayer/', [
+                'etc/bricklayer/bricklayer.ini',
+                'etc/bricklayer/gpg.key']),
+        ])
 setup(
     name='bricklayer',
     version='1.0',
@@ -36,11 +44,12 @@ setup(
     license='Apache License',
     keywords = "package builder debian rpm",
     url = "http://locaweb.github.com",
-    packages=find_packages(), 
-    entry_points="""
-    [console_scripts]
-    build_consumer = bricklayer.build_consumer:main
-    """,
+    packages= [ "bricklayer", "bricklayer.utils.pystache", "twisted.plugins" ],
+    package_data = { "twisted" : [
+            "plugins/txbricklayer.py", 
+            "plugins/txbricklayer_web.py"] },
     include_package_data = True,
     data_files=data_files_list
 )
+
+refresh_plugin_cache()

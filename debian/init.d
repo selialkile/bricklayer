@@ -17,12 +17,9 @@ PATH=/usr/bin:/usr/sbin:/bin:/sbin
 DAEMON=/usr/bin/twistd
 RUNDIR=/var/run
 PIDFILE=/var/run/bricklayer.pid
-TACFILE=/etc/bricklayer/bricklayer.tac
+PIDFILE_REST=/var/run/bricklayer-rest.pid
 LOGFILE=/var/log/bricklayer.log
-
-CONSUMER=/usr/bin/build_consumer
-CONSUMER_PIDFILE=/var/run/build_consumer.pid
-CONSUMER_LOGFILE=/var/log/build_consumer.log
+LOGFILE_REST=/var/log/bricklayer-rest.log
 
 # Include bricklayer defaults if available
 if [ -r /etc/default/bricklayer ]; then
@@ -30,23 +27,19 @@ if [ -r /etc/default/bricklayer ]; then
 fi
 
 test -x ${DAEMON} || exit 0
-test -r ${TACFILE} || exit 0
 
 case "$1" in
   start)
 	echo -n "Starting bricklayer"
-	${DAEMON} -y ${TACFILE} --pidfile=${PIDFILE} -l /var/log/bricklayer.log 2>&1 > /dev/null &
-	PYTHONPATH=/usr/share/pyshared/bricklayer/utils twistd -y /usr/share/pyshared/bricklayer/rest.py -l /var/log/bricklayer-rest.log
-    	start-stop-daemon --start --quiet --exec ${CONSUMER} --pidfile ${CONSUMER_PIDFILE}.1 -b 
-    	start-stop-daemon --start --quiet --exec ${CONSUMER} --pidfile ${CONSUMER_PIDFILE}.2 -b 
-    	start-stop-daemon --start --quiet --exec ${CONSUMER} --pidfile ${CONSUMER_PIDFILE}.3 -b 
+	${DAEMON} --pidfile=${PIDFILE} --logfile=${LOGFILE} bricklayer 2>&1 > /dev/null &
+	${DAEMON} --pidfile=${PIDFILE_REST} --logfile=${LOGFILE_REST} bricklayer_web 2>&1 > /dev/null &
 	echo "."	
 	;;
   stop)
 	echo -n "Stopping bricklayer"
-	ps aux | grep twistd | grep -v grep | awk '{print $2}' | xargs kill -9
-	ps aux | grep build_consumer | grep -v grep | awk '{print $2}' | xargs kill -9
-	rm /var/run/bricklayer.sock
+	cat ${PIDFILE} | xargs kill
+	cat ${PIDFILE_REST} | xargs kill
+
 	echo "."
 	;;
   restart)

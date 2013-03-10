@@ -14,7 +14,7 @@ import logging
 sys.path.append(os.path.join(os.path.dirname(__file__), 'utils'))
 sys.path.append(os.path.dirname(__file__))
 
-import pystache
+from bricklayer.utils import pystache
 import git
 
 from twisted.internet import threads, reactor, defer
@@ -26,13 +26,13 @@ from builder_deb import BuilderDeb
 from build_options import BuildOptions
 from build_container import BuildContainer
 
-from dreque import Dreque
+#from dreque import Dreque
 
 config = BrickConfig()
 redis_server = config.get('redis', 'redis-server')
 log_file = config.get('log', 'file')
 
-queue = Dreque(redis_server)
+#queue = Dreque(redis_server)
 
 logging.basicConfig(filename=log_file, level=logging.DEBUG)
 log = logging.getLogger('builder')
@@ -84,15 +84,6 @@ class Builder(object):
         self.stdout = None
         self.stderr = self.stdout
 
-    def build_install_deps(self):
-        p = self._exec("dpkg-checkbuilddeps".split(), stderr=subprocess.PIPE)
-        out = p.stderr.read()
-        if out != "":
-            deps = re.findall("([a-z0-9\-]+\s|[a-z0-9\-]+$)", out.split("dependencies:")[1])
-            deps = map(lambda x: x.strip(), deps)
-            apt_cmd = "apt-get -y --force-yes install %s" % " ".join(deps)
-            self._exec(apt_cmd.split())
-        
     def _exec(self, cmd, *args, **kwargs):
         if self.build_options.not_found:
             return subprocess.Popen(cmd, *args, **kwargs)

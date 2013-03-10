@@ -22,7 +22,22 @@ class BuilderDeb():
         self.builder = builder
         self.project = self.builder.project
         log.info("Debian builder initialized: %s" % self.builder.workdir)
-        log.info("Building with options: %s" % self.builder.build_options.options)
+        log.info("Building [%s] with options: %s" % (
+                self.project.name, 
+                self.builder.build_options.options
+                ))
+
+    def build_install_deps(self):
+        p = self.builder._exec(["dpkg-checkbuilddeps"], stderr=subprocess.PIPE)
+        p.wait()
+        out = p.stderr.read()
+        if out != "":
+            deps = re.findall("([a-z0-9\-]+\s|[a-z0-9\-]+$)", out.split("dependencies:")[1])
+            deps = map(lambda x: x.strip(), deps)
+            apt_cmd = "apt-get -y --force-yes install %s" % " ".join(deps)
+            b = self.builder._exec(apt_cmd.split(), stdout=self.stdout, stderr=self.stderr)
+            b.wait()
+            
 
     def build(self, branch, last_tag=None, force_version=None, force_release=None):
         templates = {}
@@ -40,6 +55,8 @@ class BuilderDeb():
         self.build_info.log(logfile)
         self.stdout = open(logfile, 'a+')
         self.stderr = self.stdout
+
+        self.build_install_deps()
 
         if self.project.install_prefix is None:
             self.project.install_prefix = 'opt'
@@ -173,13 +190,16 @@ class BuilderDeb():
 
         os.chmod(os.path.join(debian_dir, 'rules'), stat.S_IRWXU|stat.S_IRWXG|stat.S_IROTH|stat.S_IXOTH)
         dpkg_cmd = self.builder._exec(
-                ['dpkg-buildpackage',  '-rfakeroot', '-tc', '-k%s' % BrickConfig().get('gpg', 'keyid')],
+                ['dpkg-buildpackage',  
+                 '-rfakeroot', '-tc', '-k%s' % BrickConfig().get('gpg', 'keyid')],
                 cwd=self.builder.workdir, env=rvm_env, stdout=self.stdout, stderr=self.stderr
         )
 
         dpkg_cmd.wait()
 
-        clean_cmd = self.builder._exec(['dh', 'clean'], cwd=self.builder.workdir)
+        clean_cmd = self.builder._exec(['dh', 'clean'], 
+                                       cwd=self.builder.workdir, 
+                                       stdout=self.stdout, stderr=self.stderr)
         clean_cmd.wait()
 
         if self.builder.build_options.changelog and os.path.isfile("%s.save" % changelog):
@@ -191,14 +211,10 @@ class BuilderDeb():
                 self.project.name, 
                 self.project.version(branch))
         )[0]
-        log.info('%s/%s_%s_*.changes' % (
-                self.builder.workspace, 
-                self.project.name, 
-                self.project.version(branch))
-        )
-        log.info(changes_file)
+        
         distribution, files = self.parse_changes(changes_file)
         self.local_repo(distribution, files)
+
         try:
             self.upload_files(distribution, files)
             upload_file = changes_file.replace('.changes', '.upload')
@@ -273,16 +289,14 @@ BinDirectory "dists/experimental" {
                             BrickConfig().get("local_repo", "dir"), 
                             self.project.group_name
                         ))
-
-        os.chdir(self.builder.workspace)
-
+        
+        workspace = BrickConfig().get("workspace", "dir")
         for f in files:
+            f = f.strip()
             if f.endswith('.dsc') or f.endswith('.tar.gz'):
-                print repo_src_path, f
-                shutil.copy(f, os.path.join(repo_src_path, f))
+                shutil.copy(os.path.join(workspace, f), os.path.join(repo_src_path, f))
             elif f.endswith('.deb'):
-                print repo_bin_path, f
-                shutil.copy(f, os.path.join(repo_bin_path, f))
+                shutil.copy(os.path.join(workspace, f), os.path.join(repo_bin_path, f))
 
         repo_base_path = os.path.join(BrickConfig().get('local_repo', 'dir'), self.project.group_name)
         
