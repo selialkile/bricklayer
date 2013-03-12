@@ -308,13 +308,14 @@ BinDirectory "dists/experimental" {
         repository_url, user, passwd = self.project.repository()
         if not repository_url:
             return 0
-        os.chdir(self.builder.workspace)
+        os.chdir(BrickConfig().get('workspace', 'dir'))
+        workspace = BrickConfig().get('workspace', 'dir')
         ftp = ftplib.FTP(repository_url, user, passwd)
         try:
             ftp.cwd(distribution)
             for f in files:
-                log.info("\t%s: " % os.path.join(self.builder.workspace, f))
-                ftp.storbinary("STOR %s" % f, open(os.path.join(self.builder.workspace, f), 'rb'))
+                log.info("\t%s: " % os.path.join(workspace, f))
+                ftp.storbinary("STOR %s" % f, open(os.path.join(workspace, f), 'rb'))
                 log.info("done.")
         except Exception, e:
             log.info(repr(e))
