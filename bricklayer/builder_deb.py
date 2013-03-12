@@ -168,7 +168,7 @@ class BuilderDeb():
             log.info("RVMRC: %s" % rvmexec)
 
             # I need the output not to log on file
-            rvm_cmd = subprocess.Popen('/usr/local/bin/rvm info %s' % rvmexec.split()[1],
+            rvm_cmd = subprocess.Popen('/usr/local/rvm/bin/rvm info %s' % rvmexec.split()[1],
                     shell=True, stdout=subprocess.PIPE)
             rvm_cmd.wait()
             for line in rvm_cmd.stdout.readlines():
@@ -206,11 +206,12 @@ class BuilderDeb():
             os.rename("%s.save" % changelog, changelog)
 
     def upload(self, branch):
-        changes_file = glob.glob('%s/%s_%s_*.changes' % (
+        glob_str = '%s/%s_%s_*.changes' % (
                 BrickConfig().get('workspace', 'dir'), 
                 self.project.name, 
                 self.project.version(branch))
-        )[0]
+        log.info(glob_str)
+        changes_file = glob.glob(glob_str)[0]
         
         distribution, files = self.parse_changes(changes_file)
         self.local_repo(distribution, files)
