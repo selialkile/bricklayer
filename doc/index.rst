@@ -48,17 +48,23 @@ For projects:
     repository_user="a_user" # ftp user for this repository
     repository_passwd="a_g00dP455w0rd" # needless to explain
 
-  GET /project/project_name:
+  GET /project/:project_name:
     Return the attributes of the project in JSON format
 
-  POST /build/project_name
+  DELETE /project/:project_name
+    Delete the given project
+
+  POST /build/:project_name
     branch="master" # inform the branch that will schedule a build
 
-  GET /build/project_name
+  GET /build/:project_name
     Return an array of completed builds
 
-  GET /log/project_name/build_number
+  GET /log/:project_name/:build_number
     Return the logfile for the given build number
+
+  POST /clear/:project_name
+    Clear project directory
 
 
 For groups:
