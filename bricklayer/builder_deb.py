@@ -214,6 +214,7 @@ class BuilderDeb():
         changes_file = glob.glob(glob_str)[0]
         
         distribution, files = self.parse_changes(changes_file)
+        log.info(distribution, files)
         self.local_repo(distribution, files)
 
         try:
@@ -229,6 +230,7 @@ class BuilderDeb():
         distribution = ""
         tmpfiles = [os.path.basename(changes_file)]
         for line in content:
+            log.info(line)
             if line.startswith('Distribution'):
                 distribution = line.strip('\n')
                 distribution = distribution.split(':')[1].strip(' ')
@@ -311,8 +313,8 @@ BinDirectory "dists/experimental" {
         try:
             ftp.cwd(distribution)
             for f in files:
-                log.info("\t%s: " % f)
-                ftp.storbinary("STOR %s" % f, open(f, 'rb'))
+                log.info("\t%s: " % os.path.join(self.builder.workspace, f))
+                ftp.storbinary("STOR %s" % f, open(os.path.join(self.builder.workspace, f), 'rb'))
                 log.info("done.")
         except Exception, e:
             log.info(repr(e))
