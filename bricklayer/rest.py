@@ -49,7 +49,7 @@ class Project(cyclone.web.RequestHandler):
                 project.group_name = self.get_argument('group_name')
                 project.save()
                 log.msg('Project created:', project.name)
-                reactor.callInThread(Builder.build_project, {
+                reactor.callInThread(Builder(project.name).build_project, {
                             'project': project.name, 
                             'branch': self.get_argument('branch'), 
                             'release': 'experimental'
@@ -149,7 +149,7 @@ class Branch(cyclone.web.RequestHandler):
         else:
             project.add_branch(branch)
             project.version(branch, '0.1')
-            reactor.callInThread(Builder.build_project, {'project': project.name, 'branch': self.get_argument('branch'), 'release': 'experimental'})
+            reactor.callInThread(Builder(project.name).build_project, {'project': project.name, 'branch': self.get_argument('branch'), 'release': 'experimental'})
             self.write(cyclone.escape.json_encode({'status': 'ok'}))
 
     def delete(self, project_name):
@@ -165,7 +165,7 @@ class Build(cyclone.web.RequestHandler):
         version = self.get_argument('version')
         commit = self.get_argument('commit', default=None)
 
-        reactor.callInThread(Builder.build_project, 
+        reactor.callInThread(Builder(project.name).build_project, 
                 {
                     'project': project.name, 
                     'branch' : 'master', 
