@@ -35,9 +35,11 @@ class Git(object):
         git_cmd.wait()
     
     def checkout_tag(self, tag='master'):
-        git_cmd = self._exec_git(['git', 'checkout', tag], cwd=self.workdir)
-        git_cmd.wait()
-    
+        git_cmd = self._exec_git(['git', 'checkout', '-f', tag], stdout=subprocess.PIPE, cwd=self.workdir)
+        s = git_cmd.wait()
+        if s != 0:
+            log.info("Checkout fail: %s" % s.stderr.read())
+
     def checkout_branch(self, branch):
         if branch in self.branches():
             git_cmd = self._exec_git(['git', 'checkout', branch], cwd=self.workdir)
