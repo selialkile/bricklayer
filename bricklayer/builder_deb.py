@@ -55,8 +55,9 @@ class BuilderDeb():
         self.build_info.log(logfile)
         self.stdout = open(logfile, 'a+')
         self.stderr = self.stdout
-
-        self.build_install_deps()
+        
+        # Not now
+        #self.build_install_deps()
 
         if self.project.install_prefix is None:
             self.project.install_prefix = 'opt'
