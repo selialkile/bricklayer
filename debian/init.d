@@ -37,7 +37,7 @@ case "$1" in
 	;;
   stop)
 	echo -n "Stopping bricklayer"
-	cat ${PIDFILE} | xargs kill
+	cat ${PIDFILE} | xargs kill -9
 	cat ${PIDFILE_REST} | xargs kill
 
 	echo "."

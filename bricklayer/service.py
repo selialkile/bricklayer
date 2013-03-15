@@ -37,7 +37,7 @@ class BricklayerService(service.Service):
     def sched_builder(self):
         for project in Projects.get_all():
             try:
-                log.info("checking project: %s" % project.name)
+                log.msg("checking project: %s" % project.name)
                 if project.is_building():
                     log.msg("project %s still building, skip" % project.name)
                     continue

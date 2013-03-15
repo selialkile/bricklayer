@@ -69,7 +69,9 @@ class Git(object):
             
 
     def last_commit(self, branch='master'):
-        return open(os.path.join(self.workdir, '.git', 'refs', 'heads', branch)).read()
+        cf = os.path.join(self.workdir, '.git', 'refs', 'heads', branch)
+        if os.path.exists(cf):
+            return open(cf).read()
 
     def last_tag(self, tag_type):
         tags = self.tags(tag_type)
