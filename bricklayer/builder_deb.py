@@ -230,7 +230,6 @@ class BuilderDeb():
         distribution = ""
         tmpfiles = [os.path.basename(changes_file)]
         for line in content:
-            log.info(line)
             if line.startswith('Distribution'):
                 distribution = line.strip('\n')
                 distribution = distribution.split(':')[1].strip(' ')
