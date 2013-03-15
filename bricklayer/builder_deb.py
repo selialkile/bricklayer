@@ -211,11 +211,9 @@ class BuilderDeb():
                 BrickConfig().get('workspace', 'dir'), 
                 self.project.name, 
                 self.project.version(branch))
-        log.info(glob_str)
         changes_file = glob.glob(glob_str)[0]
         
         distribution, files = self.parse_changes(changes_file)
-        log.info(distribution, files)
         self.local_repo(distribution, files)
 
         try:

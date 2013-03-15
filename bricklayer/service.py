@@ -61,16 +61,16 @@ class BricklayerService(service.Service):
                         except Exception, e:
                             log.msg("tag not parsed: %s:%s" % (project.name, git.last_tag(release)))
                 
-                if int(project.experimental) == 1:
-                    for branch in project.branches():
-                        git.checkout_remote_branch(branch)
-                        git.checkout_branch(branch)
-                        git.pull()
-                        if project.last_commit(branch) != git.last_commit(branch):
-                            project.last_commit(branch, git.last_commit(branch))
-                            d = threads.deferToThread(self.send_job, project.name, branch, 'experimental', None)
-
-                        git.checkout_branch("master")
+                #if int(project.experimental) == 1:
+                #    for branch in project.branches():
+                #        git.checkout_remote_branch(branch)
+                #        git.checkout_branch(branch)
+                #        git.pull()
+                #        if project.last_commit(branch) != git.last_commit(branch):
+                #            project.last_commit(branch, git.last_commit(branch))
+                #            d = threads.deferToThread(self.send_job, project.name, branch, 'experimental', None)
+                # 
+                #        git.checkout_branch("master")
 
             except Exception, e:
                 log.err(e)
