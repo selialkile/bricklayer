@@ -28,54 +28,16 @@ debian-based system just run (after install Redis):
         dpkg -i ../bricklayer*.deb # were * is your architecture and version
 
 
-Usage
-=====
 
-Bricklayer has a restful interface that accepts the following parameters:
+HTTP API
+========
 
-For projects:
+* :doc:`Bricklayer has a restful interface that accepts a JSON payload <http_api>`
 
-::
+.. toctree::
+  :hidden:
 
-  POST /project:
-    name="bricklayer" # The project name
-    version="1.0-1"   # Initial version (will be incremented by each git commit or hudson git tag)
-    git_url="git://host/project/repository.git" # Repository URL to watch
-    branch="master"  # Branch to follow
-    build_cmd="make"  # Command within your project that generate binaries or prepare your project to be installed
-    install_cmd="make install PREFIX=debian/tmp" # A command within your project that install the generated binaries
-    respository_url="ftp.location.com" # A ftp package repository that your package will be uploaded
-    repository_user="a_user" # ftp user for this repository
-    repository_passwd="a_g00dP455w0rd" # needless to explain
-
-  GET /project/:project_name:
-    Return the attributes of the project in JSON format
-
-  DELETE /project/:project_name
-    Delete the given project
-
-  POST /build/:project_name
-    branch="master" # inform the branch that will schedule a build
-
-  GET /build/:project_name
-    Return an array of completed builds
-
-  GET /log/:project_name/:build_number
-    Return the logfile for the given build number
-
-  POST /clear/:project_name
-    Clear project directory
-
-
-For groups:
-
-::
-
-  POST /group:
-    name="group" # The group name
-    repo_addr="repository_url" # The package repository URL
-    repo_user="user" # The package repository user
-    repo_passwd="p4ssw0rd" # The package repository password
+  http_api
 
 
 Development
