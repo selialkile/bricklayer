@@ -27,9 +27,6 @@ Creates a new project with the given :project_name
 :repo_passwd: FTP user password for the repository
 
 
-/project/:project_name
-----------------------
-
 Method: ``GET``
 ~~~~~~~~~~~~~~~
 
@@ -37,17 +34,11 @@ Retrieve the project's information.
 
 
 
-/project/:project_name
-----------------------
-
 Method: ``DELETE``
 ~~~~~~~~~~~~~~~~~~
 
 Delete a project
 
-
-/project/:project_name
-----------------------
 
 Method: ``POST``
 ~~~~~~~~~~~~~~~~
