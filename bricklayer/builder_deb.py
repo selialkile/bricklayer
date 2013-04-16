@@ -155,13 +155,16 @@ class BuilderDeb():
                 changelog_data.update({'version': self.project.version(branch), 'branch': 'experimental'})
                 self.build_info.version(self.project.version(branch))
                 self.build_info.release('experimental:%s' % branch)
+            
+            with file(os.path.join(self.builder.workdir, 'debian', 'changelog'), 'w') as fh:
+                fh.write(changelog_entry % changelog_data)
+
         else:
             self.build_info.version(force_version)
             self.build_info.release(force_release)
             self.project.version(branch, force_version)
 
         
-        open(os.path.join(self.builder.workdir, 'debian', 'changelog'), 'w').write(changelog_entry % changelog_data)
 
         rvm_env = {}
         rvm_rc = os.path.join(self.builder.workdir, '.rvmrc')
