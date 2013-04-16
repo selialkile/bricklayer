@@ -76,6 +76,9 @@ class BuilderDeb():
                 }
             return (changelog_entry, changelog_data)
 
+        else:
+            return (None, None)
+
     def build_install_deps(self):
         p = self.builder._exec(["dpkg-checkbuilddeps"], stderr=subprocess.PIPE)
         p.wait()
@@ -105,8 +108,9 @@ class BuilderDeb():
         self.stderr = self.stdout
         self.debian_dir = os.path.join(self.builder.workdir, 'debian')
         
-        os.environ.update({'BRICKLAYER_RELEASE': last_tag.split('_')[0]})
-        os.environ.update({'BRICKLAYER_TAG': last_tag})
+        if last_tag is not None:
+            os.environ.update({'BRICKLAYER_RELEASE': last_tag.split('_')[0]})
+            os.environ.update({'BRICKLAYER_TAG': last_tag})
 
         # Not now
         #self.build_install_deps()
@@ -144,22 +148,21 @@ class BuilderDeb():
                 """
                 otherwise it should change the distribution to experimental
                 """
-                if self.project.version(branch):
-                    version_list = self.project.version(branch).split('.')
-                    version_list[len(version_list) - 1] = str(int(version_list[len(version_list) - 1]) + 1)
-                    self.project.version(branch, '.'.join(version_list))
-
-                    changelog_data.update({'version': self.project.version(branch), 'branch': 'experimental'})
-                    self.build_info.version(self.project.version(branch))
-                    self.build_info.release('experimental:%s' % branch)
-                else:
-                    self.build_info.version(force_version)
-                    self.build_info.release(force_release)
-                    self.project.version(branch, force_version)
-
-            open(os.path.join(self.builder.workdir, 'debian', 'changelog'), 'w').write(changelog_entry % changelog_data)
+                version_list = self.project.version(branch).split('.')
+                version_list[len(version_list) - 1] = str(int(version_list[len(version_list) - 1]) + 1)
+                self.project.version(branch, '.'.join(version_list))
+                
+                changelog_data.update({'version': self.project.version(branch), 'branch': 'experimental'})
+                self.build_info.version(self.project.version(branch))
+                self.build_info.release('experimental:%s' % branch)
+        else:
+            self.build_info.version(force_version)
+            self.build_info.release(force_release)
+            self.project.version(branch, force_version)
 
         
+        open(os.path.join(self.builder.workdir, 'debian', 'changelog'), 'w').write(changelog_entry % changelog_data)
+
         rvm_env = {}
         rvm_rc = os.path.join(self.builder.workdir, '.rvmrc')
         rvm_rc_example = rvm_rc +  ".example"
