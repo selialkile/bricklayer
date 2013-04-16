@@ -51,17 +51,12 @@ class Builder(object):
         self.build_system = BrickConfig().get('build', 'system')
         self.build_options = BuildOptions(self.git.workdir)
 
-        if not self.build_options.not_found:
-            self.build_container = BuildContainer(self.project)
-            self.build_container.setup()
-            self.workspace = self.build_container.workspace
-            self.git.workdir = "%s/%s" % (self.workspace, self.project.name)
-        else:
-            self.build_container = None
-            self.workspace = "%s/%s" % (
-                BrickConfig().get('workspace', 'dir'),
-                self.project.name,
-            )
+        
+        self.build_container = None
+        self.workspace = "%s/%s" % (
+            BrickConfig().get('workspace', 'dir'),
+            self.project.name,
+        )
 
         self.real_workspace = "%s/%s" % (
             BrickConfig().get('workspace', 'dir'), self.project.name
@@ -85,7 +80,7 @@ class Builder(object):
         self.stderr = self.stdout
 
     def _exec(self, cmd, *args, **kwargs):
-        if self.build_options.not_found:
+        if True or self.build_options.not_found:
             return subprocess.Popen(cmd, *args, **kwargs)
         else:
             chroot_cmd = "chroot %s bash -c \"cd %s; %s\"" % (self.build_container.dir, self.real_workspace, " ".join(cmd))

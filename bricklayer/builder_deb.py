@@ -155,6 +155,7 @@ class BuilderDeb():
                 else:
                     self.build_info.version(force_version)
                     self.build_info.release(force_release)
+                    self.project.version(branch, force_version)
 
             open(os.path.join(self.builder.workdir, 'debian', 'changelog'), 'w').write(changelog_entry % changelog_data)
 
@@ -211,10 +212,11 @@ class BuilderDeb():
 
 
     def upload(self, branch):
+        self.project.version(branch)
+
         glob_str = '%s/%s_%s_*.changes' % (
                 BrickConfig().get('workspace', 'dir'), 
-                self.project.name, 
-                self.project.version(branch))
+                self.project.name, self.project.version(branch))
         changes_file = glob.glob(glob_str)[0]
         
         distribution, files = self.parse_changes(changes_file)
@@ -225,7 +227,7 @@ class BuilderDeb():
             upload_file = changes_file.replace('.changes', '.upload')
             open(upload_file, 'w').write("done")
         except Exception, e:
-            log.error("Package could be uploaded: %s", e)
+            log.error("Package could not be uploaded: %s", e)
 
     def parse_changes(self, changes_file):
         content = open(changes_file).readlines()

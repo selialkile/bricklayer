@@ -7,7 +7,7 @@ sys.path.append(os.path.dirname(__file__))
 from projects import Projects
 from groups import Groups
 from git import Git
-from builder import Builder
+from builder import Builder, build_project
 from build_info import BuildInfo
 from config import BrickConfig
 
@@ -141,7 +141,7 @@ class Branch(cyclone.web.RequestHandler):
         else:
             project.add_branch(branch)
             project.version(branch, '0.1')
-            reactor.callInThread(Builder(project.name).build_project, {'project': project.name, 'branch': self.get_argument('branch'), 'release': 'experimental'})
+            reactor.callInThread(build_project, {'project': project.name, 'branch': self.get_argument('branch'), 'release': 'experimental'})
             self.write(cyclone.escape.json_encode({'status': 'ok'}))
 
     def delete(self, project_name):
@@ -155,9 +155,9 @@ class Build(cyclone.web.RequestHandler):
         project = Projects(project_name)
         release = self.get_argument('tag')
         version = self.get_argument('version')
-        commit = self.get_argument('commit', default=None)
+        commit = self.get_argument('commit', default='HEAD')
 
-        reactor.callInThread(Builder(project.name).build_project, {
+        reactor.callInThread(build_project, {
                     'project': project.name, 
                     'branch' : 'master', 
                     'release': release, 
