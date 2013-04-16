@@ -215,8 +215,6 @@ class BuilderDeb():
 
 
     def upload(self, branch):
-        self.project.version(branch)
-
         glob_str = '%s/%s_%s_*.changes' % (
                 BrickConfig().get('workspace', 'dir'), 
                 self.project.name, self.project.version(branch))
