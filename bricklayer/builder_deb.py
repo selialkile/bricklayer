@@ -26,48 +26,8 @@ class BuilderDeb():
                 self.project.name, 
                 self.builder.build_options.options
                 ))
-
-    def build_install_deps(self):
-        p = self.builder._exec(["dpkg-checkbuilddeps"], stderr=subprocess.PIPE)
-        p.wait()
-        out = p.stderr.read()
-        if out != "":
-            deps = re.findall("([a-z0-9\-]+\s|[a-z0-9\-]+$)", out.split("dependencies:")[1])
-            deps = map(lambda x: x.strip(), deps)
-            apt_cmd = "apt-get -y --force-yes install %s" % " ".join(deps)
-            b = self.builder._exec(apt_cmd.split(), stdout=self.stdout, stderr=self.stderr)
-            b.wait()
-            
-
-    def build(self, branch, last_tag=None, force_version=None, force_release=None):
-        templates = {}
-        templates_dir = os.path.join(self.builder.templates_dir, 'deb')
-        debian_dir = os.path.join(self.builder.workdir, 'debian')
-        control_data_new = None
-
-        self.build_info = BuildInfo(self.project.name)
-        logfile = os.path.join(
-                self.builder.workspace, 'log', '%s.%s.log' % (
-                    self.project.name, self.build_info.build_id
-                    )
-                )
-        log.info("build log file: %s" % logfile)
-        self.build_info.log(logfile)
-        self.stdout = open(logfile, 'a+')
-        self.stderr = self.stdout
-        
-        # Not now
-        #self.build_install_deps()
-
-        if self.project.install_prefix is None:
-            self.project.install_prefix = 'opt'
-
-        if not self.project.install_cmd :
-
-            self.project.install_cmd = 'cp -r \`ls | grep -v debian\` debian/tmp/%s' % (
-                    self.project.install_prefix
-                )
-
+    
+    def configure_changelog(self, branch):
         template_data = {
                 'name': self.project.name,
                 'version': "%s" % (self.project.version(branch)),
@@ -79,8 +39,8 @@ class BuilderDeb():
             }
 
         changelog = os.path.join(self.builder.workdir, 'debian', 'changelog')
+        
         if hasattr(self.builder.build_options, 'changelog') and self.builder.build_options.changelog:
-
             if os.path.isfile(changelog):
                 os.rename(changelog, "%s.save" % changelog)
 
@@ -89,14 +49,14 @@ class BuilderDeb():
                 templates[f] = pystache.template.Template(template_fd.read()).render(context=template_data)
                 template_fd.close()
 
-            if not os.path.isdir(debian_dir):
+            if not os.path.isdir(self.debian_dir):
 
                 map(read_file_data, ['changelog', 'control', 'rules'])
 
-                os.makedirs( os.path.join( debian_dir, self.project.name, self.project.install_prefix))
+                os.makedirs( os.path.join(self.debian_dir, self.project.name, self.project.install_prefix))
 
                 for filename, data in templates.iteritems():
-                    open(os.path.join(debian_dir, filename), 'w').write(data)
+                    open(os.path.join(self.debian_dir, filename), 'w').write(data)
 
             changelog_entry = """%(name)s (%(version)s) %(branch)s; urgency=low
 
@@ -114,8 +74,54 @@ class BuilderDeb():
                     'email': self.project.email,
                     'date': time.strftime("%a, %d %h %Y %T %z"),
                 }
+            return (changelog_entry, changelog_data)
 
+    def build_install_deps(self):
+        p = self.builder._exec(["dpkg-checkbuilddeps"], stderr=subprocess.PIPE)
+        p.wait()
+        out = p.stderr.read()
+        if out != "":
+            deps = re.findall("([a-z0-9\-]+\s|[a-z0-9\-]+$)", out.split("dependencies:")[1])
+            deps = map(lambda x: x.strip(), deps)
+            apt_cmd = "apt-get -y --force-yes install %s" % " ".join(deps)
+            b = self.builder._exec(apt_cmd.split(), stdout=self.stdout, stderr=self.stderr)
+            b.wait()
+            
 
+    def build(self, branch, last_tag=None, force_version=None, force_release=None):
+        templates = {}
+        templates_dir = os.path.join(self.builder.templates_dir, 'deb')
+        control_data_new = None
+
+        self.build_info = BuildInfo(self.project.name)
+        logfile = os.path.join(
+                self.builder.workspace, 'log', '%s.%s.log' % (
+                    self.project.name, self.build_info.build_id
+                    )
+                )
+        log.info("build log file: %s" % logfile)
+        self.build_info.log(logfile)
+        self.stdout = open(logfile, 'a+')
+        self.stderr = self.stdout
+        self.debian_dir = os.path.join(self.builder.workdir, 'debian')
+        
+        os.environ.update({'BRICKLAYER_RELEASE': last_tag.split('_')[0]})
+        os.environ.update({'BRICKLAYER_TAG': last_tag})
+
+        # Not now
+        #self.build_install_deps()
+
+        if self.project.install_prefix is None:
+            self.project.install_prefix = 'opt'
+
+        if not self.project.install_cmd :
+            self.project.install_cmd = 'cp -r \`ls | grep -v debian\` debian/tmp/%s' % (
+                self.project.install_prefix
+            )
+
+        changelog_entry, changelog_data = self.configure_changelog(branch)
+
+        if changelog_entry and changelog_data:
             if last_tag != None and last_tag.startswith('stable'):
                 self.project.version('stable', last_tag.split('_')[1])
                 changelog_data.update({'version': self.project.version('stable'), 'branch': 'stable'})
@@ -138,21 +144,21 @@ class BuilderDeb():
                 """
                 otherwise it should change the distribution to experimental
                 """
-
                 if self.project.version(branch):
                     version_list = self.project.version(branch).split('.')
                     version_list[len(version_list) - 1] = str(int(version_list[len(version_list) - 1]) + 1)
                     self.project.version(branch, '.'.join(version_list))
 
                     changelog_data.update({'version': self.project.version(branch), 'branch': 'experimental'})
-                self.build_info.version(self.project.version(branch))
-                self.build_info.release('experimental:%s' % branch)
+                    self.build_info.version(self.project.version(branch))
+                    self.build_info.release('experimental:%s' % branch)
+                else:
+                    self.build_info.version(force_version)
+                    self.build_info.release(force_release)
 
             open(os.path.join(self.builder.workdir, 'debian', 'changelog'), 'w').write(changelog_entry % changelog_data)
-        else:
-            self.build_info.version(force_version)
-            self.build_info.release(force_release)
 
+        
         rvm_env = {}
         rvm_rc = os.path.join(self.builder.workdir, '.rvmrc')
         rvm_rc_example = rvm_rc +  ".example"
@@ -189,7 +195,7 @@ class BuilderDeb():
                 pass
             rvm_env.update(os.environ)
 
-        os.chmod(os.path.join(debian_dir, 'rules'), stat.S_IRWXU|stat.S_IRWXG|stat.S_IROTH|stat.S_IXOTH)
+        os.chmod(os.path.join(self.debian_dir, 'rules'), stat.S_IRWXU|stat.S_IRWXG|stat.S_IROTH|stat.S_IXOTH)
         dpkg_cmd = self.builder._exec(
                 ['dpkg-buildpackage',  
                  '-rfakeroot', '-tc', '-k%s' % BrickConfig().get('gpg', 'keyid')],
@@ -203,8 +209,6 @@ class BuilderDeb():
                                        stdout=self.stdout, stderr=self.stderr)
         clean_cmd.wait()
 
-        if self.builder.build_options.changelog and os.path.isfile("%s.save" % changelog):
-            os.rename("%s.save" % changelog, changelog)
 
     def upload(self, branch):
         glob_str = '%s/%s_%s_*.changes' % (

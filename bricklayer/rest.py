@@ -16,12 +16,8 @@ import cyclone.escape
 from twisted.internet import reactor
 from twisted.python import log
 from twisted.application import service, internet
-#from dreque import Dreque
-
 
 brickconfig = BrickConfig()
-
-#queue = Dreque(brickconfig.get('redis', 'redis-server'))
 
 class Project(cyclone.web.RequestHandler):
     def post(self, *args):
@@ -49,11 +45,7 @@ class Project(cyclone.web.RequestHandler):
                 project.group_name = self.get_argument('group_name')
                 project.save()
                 log.msg('Project created:', project.name)
-                reactor.callInThread(Builder(project.name).build_project, {
-                            'project': project.name, 
-                            'branch': self.get_argument('branch'), 
-                            'release': 'experimental'
-                    })
+                
                 self.write(cyclone.escape.json_encode({'status': 'ok'}))
             except Exception, e:
                 log.err()
@@ -165,15 +157,14 @@ class Build(cyclone.web.RequestHandler):
         version = self.get_argument('version')
         commit = self.get_argument('commit', default=None)
 
-        reactor.callInThread(Builder(project.name).build_project, 
-                {
+        reactor.callInThread(Builder(project.name).build_project, {
                     'project': project.name, 
                     'branch' : 'master', 
                     'release': release, 
                     'version': version,
                     'commit' : commit,
-                    }
-                )
+        })
+
         self.write(cyclone.escape.json_encode({'status': 'build of branch %s scheduled' % release}))
 
     def get(self, project_name):
