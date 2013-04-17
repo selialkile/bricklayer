@@ -163,6 +163,7 @@ class BuilderDeb():
             self.build_info.version(force_version)
             self.build_info.release(force_release)
             self.project.version(branch, force_version)
+            self.project.version(force_release, force_version)
 
         
 
