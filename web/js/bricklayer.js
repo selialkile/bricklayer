@@ -95,7 +95,7 @@ $(function(){
 
     function show_log(name, build_id) {
         var build_log = $.ajax({url: "/log/" + name + "/" + build_id, dataType: "json", async: false}).responseText;
-        $("#build-log-view").find("pre").html(build_log);
+        $("#build-log-view").find("pre").text(build_log);
         
         if ($("#build-log-view").css("display") == "none") 
             $("#build-log-view").modal("show");
