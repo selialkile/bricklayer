@@ -93,6 +93,10 @@ class Builder(object):
         if not self.project.is_building():
             self.project.start_building()
             try:
+                if (release is not None and version is not None):
+                    if (not self.git.pull()):
+                        self.git.clone()
+
                 self.workdir = "%s-%s" % (self.git.workdir, release)
                 self.real_workspace = "%s-%s" % (self.real_workspace, release)
                 shutil.copytree(self.git.workdir, self.workdir)
