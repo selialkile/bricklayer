@@ -22,9 +22,12 @@ class Git(object):
     def clone(self, branch):
         log.info("Git clone %s" % self.project.git_url)
         git_cmd = self._exec_git(['git', 'clone', self.project.git_url, self.workdir])
-        git_cmd.wait()
+        rc = git_cmd.wait()
         if branch:
             self.checkout_branch(branch)
+        if (rc != 0):
+            shutil.rmtree(self.workdir, ignore_errors=True)
+        return(rc == 0)
 
     def reset(self):
         git_cmd = self._exec_git(['git', 'reset', 'HEAD'], cwd=self.workdir)
@@ -32,7 +35,10 @@ class Git(object):
     
     def pull(self):
         git_cmd = self._exec_git(['git', 'pull'], cwd=self.workdir)
-        git_cmd.wait()
+        rc = git_cmd.wait()
+        if (rc != 0):
+            shutil.rmtree(self.workdir, ignore_errors=True)
+        return(rc == 0)
     
     def checkout_tag(self, tag='master'):
         git_cmd = self._exec_git(['git', 'checkout', '-f', tag], stdout=subprocess.PIPE, cwd=self.workdir)
