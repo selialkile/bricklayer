@@ -34,7 +34,7 @@ class Git(object):
         git_cmd.wait()
     
     def pull(self):
-        git_cmd = self._exec_git(['git', 'pull'], cwd=self.workdir)
+        git_cmd = self._exec_git(['git', 'pull', "--ff-only"], cwd=self.workdir)
         rc = git_cmd.wait()
         if (rc != 0):
             shutil.rmtree(self.workdir, ignore_errors=True)
