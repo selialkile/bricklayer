@@ -195,13 +195,11 @@ class BuilderDeb():
         if len(rvm_env.keys()) < 1:
             rvm_env = os.environ
         else:
-            try:
-                os.environ.pop('PATH')
-                os.environ.pop('GEM_HOME')
-                os.environ.pop('BUNDLER_PATH')
-            except Exception, e:
-                pass
-            rvm_env.update(os.environ)
+            os_env = dict(os.environ)
+            for k in ("PATH", "GEM_HOME", "BUNDLER_PATH"):
+                if (k in os_env):
+                    del(os_env[k])
+            rvm_env.update(os_env)
 
         os.chmod(os.path.join(self.debian_dir, 'rules'), stat.S_IRWXU|stat.S_IRWXG|stat.S_IROTH|stat.S_IXOTH)
         dpkg_cmd = self.builder._exec(
