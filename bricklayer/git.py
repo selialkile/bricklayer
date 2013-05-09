@@ -20,25 +20,36 @@ class Git(object):
         return subprocess.Popen(cmd, cwd=cwd, stdout=stdout, stderr=stdout)
 
     def clone(self, branch=None):
-        log.info("Git clone %s" % self.project.git_url)
-        git_cmd = self._exec_git(['git', 'clone', self.project.git_url, self.workdir])
-        rc = git_cmd.wait()
-        if branch:
-            self.checkout_branch(branch)
-        if (rc != 0):
+        try:
+            if (os.path.exists(self.workdir)):
+                shtuil.rmtree(self.workdir, ignore_errors=True)
+            log.info("Git clone %s %s" % (self.project.git_url, self.workdir))
+            git_cmd = self._exec_git(['git', 'clone', self.project.git_url, self.workdir])
+            status = git_cmd.wait() == 0
+            if branch:
+                self.checkout_branch(branch)
+        except Exception, e:
+            log.info("error running git clone: %s" % str(e))
+            status = False
+        if (not status):
             shutil.rmtree(self.workdir, ignore_errors=True)
-        return(rc == 0)
+        return(status)
 
     def reset(self):
         git_cmd = self._exec_git(['git', 'reset', 'HEAD'], cwd=self.workdir)
         git_cmd.wait()
     
     def pull(self):
-        git_cmd = self._exec_git(['git', 'pull', "--ff-only"], cwd=self.workdir)
-        rc = git_cmd.wait()
-        if (rc != 0):
+        status = True
+        try:
+            git_cmd = self._exec_git(['git', 'pull', "--ff-only"], cwd=self.workdir)
+            status = git_cmd.wait() == 0
+        except:
+            log.info("error running git pull")
+            status = False
+        if (not status):
             shutil.rmtree(self.workdir, ignore_errors=True)
-        return(rc == 0)
+        return(status)
     
     def checkout_tag(self, tag='master'):
         git_cmd = self._exec_git(['git', 'checkout', '-f', tag], stdout=subprocess.PIPE, cwd=self.workdir)

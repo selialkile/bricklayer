@@ -95,7 +95,7 @@ class Builder(object):
             try:
                 if (release is not None and version is not None):
                     if (not self.git.pull()):
-                        self.git.clone()
+                        self.git.clone(branch)
 
                 self.workdir = "%s-%s" % (self.git.workdir, release)
                 self.real_workspace = "%s-%s" % (self.real_workspace, release)
