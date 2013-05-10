@@ -99,6 +99,8 @@ class Builder(object):
 
                 self.workdir = "%s-%s" % (self.git.workdir, release)
                 self.real_workspace = "%s-%s" % (self.real_workspace, release)
+                if (os.path.exists(self.workdir)):
+                    shutil.rmtree(self.workdir, ignore_errors=True)
                 shutil.copytree(self.git.workdir, self.workdir)
 
                 if self.build_system == 'rpm':
@@ -128,6 +130,6 @@ class Builder(object):
                 log.exception("build failed: %s" % repr(e))
             finally:
                 self.project.stop_building()
-                shutil.rmtree(self.workdir)
+                shutil.rmtree(self.workdir, ignore_errors=True)
                 if self.build_container != None:
                     self.build_container.teardown()
