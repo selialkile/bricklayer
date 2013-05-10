@@ -28,7 +28,7 @@ class Projects(ModelBase):
    
     @transaction
     def start_building(self):
-        self.redis_cli.incr('build_lock:%s' % self.name)
+        self.redis_cli.setex('build_lock:%s' % self.name, 3600, 1)
 
     @transaction
     def is_building(self):
