@@ -5,6 +5,8 @@ import shutil
 import logging as log
 from config import BrickConfig
 
+devnull = open('/dev/null', 'w')
+
 class Git(object):
     def __init__(self, project, workdir=None):
         _workdir = workdir
@@ -16,7 +18,7 @@ class Git(object):
 
     def _exec_git(self, cmd=[], cwd='.', stdout=None):
         if stdout is None:
-            stdout = open('/dev/null', 'w')
+            stdout = devnull
         return subprocess.Popen(cmd, cwd=cwd, stdout=stdout, stderr=stdout)
 
     def clone(self, branch=None):
@@ -88,7 +90,8 @@ class Git(object):
     def last_commit(self, branch='master'):
         cf = os.path.join(self.workdir, '.git', 'refs', 'heads', branch)
         if os.path.exists(cf):
-            return open(cf).read()
+            with file(cf, "r") as fh:
+                return(fh.read())
 
     def last_tag(self, tag_type):
         tags = self.tags(tag_type)
