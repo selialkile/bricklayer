@@ -4,7 +4,12 @@ Bricklayer builds packages to help you automate builds and upload them to reposi
 
 h2. Requirements
 
-Bricklayer uses twisted to serve a restful interface as well as the scheduler interface, it also needs Redis 2.0 or higher to store projects. Depending on the linux/unix flavor, you have to install Redis by yourself since not all the distros include redis-2.0 yet.
+Bricklayer uses twisted to serve a restful interface as well as the scheduler interface, it also needs Redis 2.6 or higher to store projects. Depending on the linux/unix flavor, you have to install Redis by yourself since not all the distros include redis-2.6 yet.
+
+Python modules:
+  * twisted
+  * yaml
+  * redis
 
 h2. Installation
 
@@ -91,7 +96,7 @@ export BRICKLAYERCONFIG=etc/bricklayer/bricklayer.ini
 Run the scheduler to clone/pull projects and schedule new builds
 
 <pre>
-twistd -ny bricklayer/bricklayer.tac
+twistd -ny bricklayer/service.py
 </pre>
 
 Run rest interface to be able to access the web interface

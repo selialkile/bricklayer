@@ -85,6 +85,11 @@
                 <li id="project"><a href="#overview">Projects</a></li>
                 <li id="group"><a href="#group">Groups</a></li>
                 <li id="package"><a href="http://pkg.bricklayer.int">Packages</a></li>
+                <li id="current_build" class="dropdown">
+                    <a class="dropdown-toggle" href="#" data-toggle="dropdown">CurrentBuilds <b class="caret"></b></a>
+                    <ul class="dropdown-menu" id="current_build_list">
+                    </ul>
+                </li>
               </ul>
 
             <form id="search-form" class="navbar-search pull-left" action="">
@@ -98,7 +103,8 @@
 
             <div id="alert-area-global"></div>
             <div class="content" id="content">
-
+                <h1>Projects <small>projects to build</small></h1>
+                <button class="btn primary" id="create">Create project</button>
             </div>
 
             <footer>
