@@ -178,6 +178,24 @@ $(function(){
         }); // ajax 
 
     }
+
+    function update_current_builds(){
+        $.get("/build/current", function(data) {
+            var content_list = "";
+            $("#current_build_list").html("");
+            for(item in data){
+                content_list += '<li><a href="#">' + data[item]["name"] + '</a></li>';
+            }
+           $("#current_build_list").html(content_list);
+        });
+        $.doTimeout("current_build_list_update", 5000, function() {
+            update_current_builds();
+        });
+    };
+
+    $("#current_build").click(function(){
+        update_current_builds();
+    });
    
     $('div[id*="-modal"]').each(function() {
         /* init forms */

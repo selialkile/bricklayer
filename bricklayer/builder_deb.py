@@ -26,6 +26,7 @@ class BuilderDeb():
                 self.project.name, 
                 self.builder.build_options.options
                 ))
+        CurrentBuild(self.project.name).save()
     
     def configure_changelog(self, branch):
         template_data = {
@@ -214,6 +215,7 @@ class BuilderDeb():
                                        cwd=self.builder.workdir, 
                                        stdout=self.stdout, stderr=self.stderr)
         clean_cmd.wait()
+        CurrentBuild(self.project.name).delete()
 
 
     def upload(self, branch):

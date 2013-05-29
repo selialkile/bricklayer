@@ -9,6 +9,7 @@ from groups import Groups
 from git import Git
 from builder import Builder, build_project
 from build_info import BuildInfo
+from current_build import CurrentBuild
 from config import BrickConfig
 
 import cyclone.web
@@ -220,18 +221,34 @@ class Group(cyclone.web.RequestHandler):
             self.write(cyclone.escape.json_encode({'status': 'fail', 'error': str(e)}))
 
     def get(self, *args):
+        groups_json = []
+        groups = []
+
         if len(args) > 1:
             name = args[0]
             groups = [Groups(name)]
         else:
             groups = Groups.get_all()
-        groups_json = []
+
         for group in groups:
             group_json = {}
             for attr in ('name', 'repo_addr', 'repo_user', 'repo_passwd'):
                 group_json.update({attr: getattr(group, attr)})
             groups_json.append(group_json)
         self.write(cyclone.escape.json_encode(groups_json))
+
+class Current(cyclone.web.RequestHandler):
+    def get(self):
+        response = []
+        currents = CurrentBuild.get_all()
+        for current in currents:
+            response.append({"name":current.name})
+        self.set_header("Content-Type", "application/json")
+        self.write(cyclone.escape.json_encode(response))
+
+    def delete(self):
+        CurrentBuild.delete_all()
+        self.write(cyclone.escape.json_encode("ok"))
 
 class Main(cyclone.web.RequestHandler):
     def get(self):
@@ -243,6 +260,7 @@ restApp = cyclone.web.Application([
     (r'/project/?(.*)', Project),
     (r'/branch/(.*)', Branch),
     (r'/clear/(.*)', Clear),
+    (r'/build/current', Current),
     (r'/build/(.*)', Build),
     (r'/group', Group),
     (r'/group/?(.*)', Group),
