@@ -51,6 +51,9 @@ class BricklayerService(service.Service):
                 else:
                     git.clone(branch)
 
+                if (not os.path.isdir(git.workdir)):
+                    continue
+
                 for remote_branch in git.branches(remote=True):
                     git.checkout_remote_branch(remote_branch.replace('origin/', ''))
 
