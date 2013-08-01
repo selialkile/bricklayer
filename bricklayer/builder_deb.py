@@ -11,6 +11,7 @@ import pystache
 import logging
 from urlparse import urlparse
 
+from current_build import CurrentBuild
 from projects import Projects
 from config import BrickConfig
 from build_info import BuildInfo
