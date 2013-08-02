@@ -101,6 +101,8 @@ class Builder(object):
                 self.real_workspace = "%s-%s" % (self.real_workspace, release)
                 if (os.path.exists(self.workdir)):
                     shutil.rmtree(self.workdir, ignore_errors=True)
+                
+                log.info("%s %s", self.workdir, self.git.workdir)
                 shutil.copytree(self.git.workdir, self.workdir)
 
                 if self.build_system == 'rpm':
@@ -110,7 +112,6 @@ class Builder(object):
 
                 os.chdir(self.workdir)
                 self.git.workdir = self.workdir
-                self.git.checkout_branch(branch)
 
                 if release == 'experimental' and self.build_options.changelog:
                     self.git.checkout_branch(branch)

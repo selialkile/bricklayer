@@ -5,6 +5,7 @@ Maintainer: root <root@debian.localdomain>
 Build-Depends: debhelper (>= 7), python-twisted, build-essential, devscripts, python-setuptools
 Standards-Version: 3.8.4
 Homepage: http://github.com/locaweb/bricklayer
+XS-Python-Version: >= 2.6
 
 Package: bricklayer
 Architecture: any

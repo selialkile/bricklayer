@@ -12,6 +12,7 @@ from bricklayer.git import Git
 def teardown():
     if os.path.isdir('tests/workspace'):
         shutil.rmtree('tests/workspace', ignore_errors=True)
+
     
 class TestGit:
     def __init__(self):
@@ -37,7 +38,6 @@ class TestGit:
     def checkout_tag_test(self):
         self.git.checkout_tag('testing_0.0.1')
         assert_true(os.path.isfile(os.path.join(self.git.workdir, 'a')))
-        assert_true(os.path.isfile(os.path.join(self.git.workdir, 'b')))
         assert_false(os.path.isfile(os.path.join(self.git.workdir, 'c')))
         self.git.checkout_tag('testing_0.0.2')
         assert_true(os.path.isfile(os.path.join(self.git.workdir, 'c')))

@@ -26,7 +26,7 @@ class Git(object):
             if (os.path.exists(self.workdir)):
                 shtuil.rmtree(self.workdir, ignore_errors=True)
             log.info("Git clone %s %s" % (self.project.git_url, self.workdir))
-            git_cmd = self._exec_git(['git', 'clone', self.project.git_url, self.workdir])
+            git_cmd = self._exec_git(['timeout', '300', 'git', 'clone', self.project.git_url, self.workdir])
             status = git_cmd.wait() == 0
             if branch:
                 self.checkout_branch(branch)
@@ -44,7 +44,7 @@ class Git(object):
     def pull(self):
         status = True
         try:
-            git_cmd = self._exec_git(['git', 'pull', "--ff-only"], cwd=self.workdir)
+            git_cmd = self._exec_git(['timeout', '300', 'git', 'pull', "--ff-only"], cwd=self.workdir)
             status = git_cmd.wait() == 0
         except:
             log.info("error running git pull")
