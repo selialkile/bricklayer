@@ -121,8 +121,7 @@ class BuilderDeb():
 
         if not self.project.install_cmd :
             self.project.install_cmd = 'cp -r \`ls | grep -v debian\` debian/tmp/%s' % (
-                self.project.install_prefix
-            )
+                self.project.install_prefix)
 
         changelog_entry, changelog_data = self.configure_changelog(branch)
 
@@ -165,8 +164,6 @@ class BuilderDeb():
             self.build_info.release(force_release)
             self.project.version(branch, force_version)
             self.project.version(force_release, force_version)
-
-        
 
         rvm_env = {}
         rvm_rc = os.path.join(self.builder.workdir, '.rvmrc')
