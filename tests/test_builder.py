@@ -4,6 +4,8 @@ from nose import *
 
 from bricklayer.projects import Projects
 from bricklayer.builder import Builder
+from bricklayer.build_info import BuildInfo
+
 
 def setup():
     os.chdir(os.path.join(os.path.dirname(__file__), '..'))
@@ -17,7 +19,8 @@ class TestBuilder:
         p.version = '0.100.0'
         p.save()
 
-        b = Builder('test_build')
-        b.build_project(branch='master', release='experimental', version='0.100.1', commit=None)
+        b = Builder(p.name)
+        pre_build_id = BuildInfo(p)
+        b.build_project(branch='master', release='testing', version='0.0.1', commit=None)
         
-        assert(False)
+        assert( BuildInfo(p).build_id != pre_build_id)

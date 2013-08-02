@@ -9,7 +9,7 @@ container_type = debian
 debian_base = /root/containers/debian
 
 [workspace]
-dir: /var/lib/bricklayer/workspace
+dir: tests/workspace
 template_dir: pkg_template
 
 ; choose your build system: deb or rpm
