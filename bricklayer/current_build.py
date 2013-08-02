@@ -30,3 +30,9 @@ class CurrentBuild(ModelBase):
         for key in keys:
             redis_cli.delete(key)
         return True
+
+    @transaction
+    def delete(self):
+        currents = self.redis_cli.keys("%s:%s" % (self.namespace, self.name))
+        for key in currents:
+            self.redis_cli.delete(key)
